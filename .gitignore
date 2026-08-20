@@ -10,3 +10,4 @@ __pycache__/
 # Pulumi
 Pulumi.*.yaml.bak
 .pulumi/
+Pulumi.dev.yaml

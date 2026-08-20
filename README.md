@@ -10,7 +10,7 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
 - [uv](https://docs.astral.sh/uv/) for Python environment and dependency management
 - [Pulumi CLI](https://www.pulumi.com/docs/iac/download-install/)
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) (`az`), authenticated via `az login` — this is the only supported way to authenticate against Azure
-- An Azure Blob Storage container to use as the Pulumi state backend
+- An Azure Blob Storage container for the Pulumi state backend (see step 3 below if you don't have one yet)
 
 ## For users: running the deployment
 
@@ -27,26 +27,39 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
    az login
    ```
 
-3. Log Pulumi in to the Azure Blob Storage state backend:
+3. Provision (or reuse) a storage account and blob container to hold the Pulumi state, if one doesn't already exist:
 
    ```bash
-   pulumi login azblob://<container>
+   az storage account create --name <storage-account> --resource-group <resource-group>
+   az storage container create --name <container> --account-name <storage-account> --auth-mode login
    ```
 
-4. Install the project's Python dependencies into a virtual environment:
+   See [Create an Azure storage account](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create) and [Manage blob containers using Azure CLI](https://learn.microsoft.com/en-us/azure/storage/blobs/blob-containers-cli) for the full set of options (redundancy, access tier, networking, etc.).
+
+   Since this project authenticates solely via the Azure CLI, grant your account the **Storage Blob Data Contributor** role on the storage account (or its resource group) so Pulumi can read/write state — see [Assign an Azure role for access to blob data](https://learn.microsoft.com/en-us/azure/storage/blobs/assign-azure-role-data-access).
+
+4. Log Pulumi in to the Azure Blob Storage state backend, using the container name from step 3 and the storage account it lives in:
+
+   ```bash
+   pulumi login "azblob://<container>?storage_account=<storage-account>"
+   ```
+
+   The `<container>` value is just the container name you chose above (e.g. `pulumi-state`); `<storage-account>` is the account it was created in. See Pulumi's [Azure Blob Storage backend docs](https://www.pulumi.com/docs/iac/operations/stack-management/using-a-diy-backend/#azure-blob-storage) for the full URL syntax and alternative authentication options.
+
+5. Install the project's Python dependencies into a virtual environment:
 
    ```bash
    uv sync
    ```
 
-5. Select (or create) a stack and deploy:
+6. Select (or create) a stack and deploy:
 
    ```bash
    pulumi stack select dev   # or: pulumi stack init dev
    pulumi up
    ```
 
-6. To tear down the deployed infrastructure:
+7. To tear down the deployed infrastructure:
 
    ```bash
    pulumi destroy
