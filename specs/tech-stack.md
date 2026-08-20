@@ -26,6 +26,10 @@ Minimum tech stack for a Pulumi program that deploys Azure infrastructure using 
   - **ruff** — linter and formatter
   - **ty** — type checker
 
+## Testing
+
+- **Pulumi's testing facilities** (`pulumi.runtime.set_mocks` / unit testing framework) — used to test the Pulumi program's resources and logic before deployment
+
 ## State Backend
 
 - **Azure Blob Storage** — the Pulumi state backend, self-managed via `pulumi login azblob://<container>`
