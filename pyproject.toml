@@ -23,8 +23,3 @@ select = ["E", "F", "I", "UP"]
 
 [tool.ty.environment]
 python-version = "3.11"
-
-[tool.ty.src]
-# ty cannot resolve pulumi's overloaded, generic-self `Output.apply` signature
-# used by the `@pulumi.runtime.test` mocking pattern in tests.
-exclude = ["tests/**"]

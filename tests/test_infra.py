@@ -24,4 +24,8 @@ class TestInfra(unittest.TestCase):
         def check_urn(urn: str) -> None:
             self.assertIn("rse-cloud-cybersecurity-rg", urn)
 
-        return infra.resource_group.urn.apply(check_urn)
+        # ty cannot resolve pulumi's overloaded, generic-self `Output.apply`
+        # signature used by this mocking pattern.
+        return infra.resource_group.urn.apply(  # ty: ignore[missing-argument]
+            check_urn  # ty: ignore[invalid-argument-type]
+        )
