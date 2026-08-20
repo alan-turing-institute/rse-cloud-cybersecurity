@@ -1,0 +1,6 @@
+name: rse-cloud-cybersecurity
+runtime:
+  name: python
+  options:
+    virtualenv: .venv
+description: Pulumi program that deploys Azure infrastructure for the "Cloud Cybersecurity for Research Engineers" RSECON26 presentation.
