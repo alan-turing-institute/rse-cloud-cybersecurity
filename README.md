@@ -2,7 +2,7 @@
 
 A repository for the "Cloud Cybersecurity for Research Engineers​" presentation at RSECON26.
 
-This repository contains a [Pulumi](https://www.pulumi.com/) program, written in Python, that deploys Azure infrastructure. See [`specs/tech-stack.md`](specs/tech-stack.md) for the full technology stack.
+This repository contains a [Pulumi](https://www.pulumi.com/) program, written in Python, that deploys Azure infrastructure. See [`CLAUDE.md`](CLAUDE.md) for the full technology stack and the coding guidelines followed when changing it.
 
 ## Prerequisites
 
@@ -126,4 +126,4 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
 
 ### Current scenario
 
-See [`specs/01-the-scenario.md`](specs/01-the-scenario.md) for the design behind the current infrastructure — a storage account, an Azure SQL Database (Basic tier — the cheapest managed RDBMS on Azure), and a Linux VM able to reach both, all kept at minimum cost. This is the initial iteration: security hardening (private networking, managed identity, RBAC) is intentionally deferred to a later iteration, so the storage account, database, and VM are all reachable over the public internet. See [`specs/coding-guidelines.md`](specs/coding-guidelines.md) for how changes to this infrastructure are verified (unit tests and static checks only — no live deployments).
+See [`specs/01-the-scenario.md`](specs/01-the-scenario.md) for the design behind the current infrastructure — a storage account, an Azure SQL Database (Basic tier — the cheapest managed RDBMS on Azure), and a Linux VM able to reach both, all kept at minimum cost. This is the initial iteration: security hardening (private networking, managed identity, RBAC) is intentionally deferred to a later iteration, so the storage account, database, and VM are all reachable over the public internet. See [`CLAUDE.md`](CLAUDE.md) for how changes to this infrastructure are verified (unit tests and static checks only — no live deployments).

@@ -1,6 +1,6 @@
 # 01 — The Scenario
 
-A minimum-cost Azure environment, built with the [tech stack](tech-stack.md), consisting of:
+A minimum-cost Azure environment, built with the [tech stack](../CLAUDE.md#tech-stack), consisting of:
 
 1. A **storage account**.
 2. An instance of the **cheapest RDBMS product available in Azure**.
