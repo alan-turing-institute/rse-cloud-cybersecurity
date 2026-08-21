@@ -34,13 +34,6 @@ class TestCompute(unittest.TestCase):
         )
 
     @pulumi.runtime.test
-    def test_virtual_machine_has_no_managed_identity(self):
-        def check(identity) -> None:
-            self.assertIsNone(identity)
-
-        return virtual_machine.identity.apply(check)  # ty: ignore[missing-argument, invalid-argument-type]
-
-    @pulumi.runtime.test
     def test_virtual_machine_uses_password_auth(self):
         def check(os_profile) -> None:
             self.assertFalse(

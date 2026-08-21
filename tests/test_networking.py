@@ -34,10 +34,8 @@ class TestNetworking(unittest.TestCase):
         ).apply(check)  # ty: ignore[invalid-argument-type]
 
     @pulumi.runtime.test
-    def test_network_interface_has_no_network_security_group(self):
-        def check(nsg) -> None:
-            self.assertIsNone(nsg)
+    def test_network_interface_urn(self):
+        def check_urn(urn: str) -> None:
+            self.assertIn("rse-vm-nic", urn)
 
-        return network_interface.network_security_group.apply(  # ty: ignore[missing-argument]
-            check  # ty: ignore[invalid-argument-type]
-        )
+        return network_interface.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]

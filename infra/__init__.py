@@ -7,10 +7,10 @@ suite can import from `infra` directly, e.g. `from infra import storage_account`
 from infra.compute import virtual_machine, vm_admin_password
 from infra.database import (
     admin_username,
-    postgres_admin_password,
-    postgres_database,
-    postgres_firewall_rule,
-    postgres_server,
+    db_admin_password,
+    sql_database,
+    sql_firewall_rule,
+    sql_server,
 )
 from infra.networking import network_interface, public_ip, virtual_network, vm_subnet
 from infra.resource_group import resource_group
@@ -19,13 +19,13 @@ from infra.storage import blob_container, storage_account
 __all__ = [
     "admin_username",
     "blob_container",
+    "db_admin_password",
     "network_interface",
-    "postgres_admin_password",
-    "postgres_database",
-    "postgres_firewall_rule",
-    "postgres_server",
     "public_ip",
     "resource_group",
+    "sql_database",
+    "sql_firewall_rule",
+    "sql_server",
     "storage_account",
     "virtual_machine",
     "virtual_network",

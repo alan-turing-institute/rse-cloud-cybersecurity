@@ -1,5 +1,5 @@
-"""Linux virtual machine that can reach the storage account and PostgreSQL
-server over the public internet (see specs/01-the-scenario.md - no managed
+"""Linux virtual machine that can reach the storage account and the SQL
+database over the public internet (see specs/01-the-scenario.md - no managed
 identity/RBAC yet, storage access uses the account key/connection string
 exported as a secret stack output instead).
 
@@ -29,8 +29,15 @@ vm_admin_password = pulumi_random.RandomPassword(
 cloud_init = """#cloud-config
 package_update: true
 packages:
-  - postgresql-client
   - azure-cli
+  - unixodbc-dev
+runcmd:
+  - curl -sSL -O https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+  - dpkg -i packages-microsoft-prod.deb
+  - rm -f packages-microsoft-prod.deb
+  - apt-get update
+  - ACCEPT_EULA=Y apt-get install -y mssql-tools18
+  - echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> /etc/profile.d/mssql-tools.sh
 """
 
 virtual_machine = compute.VirtualMachine(
