@@ -29,9 +29,9 @@ vm_admin_password = pulumi_random.RandomPassword(
 cloud_init = """#cloud-config
 package_update: true
 packages:
-  - azure-cli
   - unixodbc-dev
 runcmd:
+  - curl -fsSL 'https://azurecliprod.blob.core.windows.net/$root/deb_install.sh' | bash
   - curl -sSL -O https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
   - dpkg -i packages-microsoft-prod.deb
   - rm -f packages-microsoft-prod.deb
