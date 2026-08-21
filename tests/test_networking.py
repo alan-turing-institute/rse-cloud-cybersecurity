@@ -22,15 +22,18 @@ class TestNetworking(unittest.TestCase):
         return virtual_network.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]
 
     @pulumi.runtime.test
-    def test_network_security_group_allows_inbound_ssh_from_internet(self):
+    def test_network_security_group_allows_inbound_ssh_and_rdp_from_internet(self):
         def check(security_rules: list) -> None:
-            self.assertEqual(len(security_rules), 1)
-            rule = security_rules[0]
-            self.assertEqual(rule.direction, "Inbound")
-            self.assertEqual(rule.access, "Allow")
-            self.assertEqual(rule.protocol, "Tcp")
-            self.assertEqual(rule.source_address_prefix, "Internet")
-            self.assertEqual(rule.destination_port_range, "22")
+            self.assertEqual(len(security_rules), 2)
+            rules_by_port = {
+                rule.destination_port_range: rule for rule in security_rules
+            }
+            self.assertEqual(set(rules_by_port), {"22", "3389"})
+            for rule in rules_by_port.values():
+                self.assertEqual(rule.direction, "Inbound")
+                self.assertEqual(rule.access, "Allow")
+                self.assertEqual(rule.protocol, "Tcp")
+                self.assertEqual(rule.source_address_prefix, "Internet")
 
         return network_security_group.security_rules.apply(check)  # ty: ignore[missing-argument, invalid-argument-type]
 

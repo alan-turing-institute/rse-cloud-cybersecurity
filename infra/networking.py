@@ -2,9 +2,10 @@
 
 The VM is meant to be reachable directly over the public internet (see
 specs/01-the-scenario.md - security hardening is a later iteration). The one
-exception is a minimal NSG allowing inbound SSH from anywhere, added purely
-so the VM is reachable for the demo - it is not a security boundary, and
-every other port stays open via the default allow-all rules.
+exception is a minimal NSG allowing inbound SSH and RDP from anywhere, added
+purely so the VM (and its graphical desktop) is reachable for the demo - it
+is not a security boundary, and every other port stays open via the default
+allow-all rules.
 """
 
 from pulumi_azure_native import network
@@ -31,7 +32,18 @@ network_security_group = network.NetworkSecurityGroup(
             source_port_range="*",
             destination_address_prefix="*",
             destination_port_range="22",
-        )
+        ),
+        network.SecurityRuleArgs(
+            name="allow-rdp-from-internet",
+            priority=110,
+            direction=network.SecurityRuleDirection.INBOUND,
+            access=network.SecurityRuleAccess.ALLOW,
+            protocol=network.SecurityRuleProtocol.TCP,
+            source_address_prefix="Internet",
+            source_port_range="*",
+            destination_address_prefix="*",
+            destination_port_range="3389",
+        ),
     ],
 )
 
