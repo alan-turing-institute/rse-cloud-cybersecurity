@@ -4,7 +4,13 @@ import unittest
 
 import pulumi
 
-from infra.networking import network_interface, public_ip, virtual_network, vm_subnet
+from infra.networking import (
+    network_interface,
+    network_security_group,
+    public_ip,
+    virtual_network,
+    vm_subnet,
+)
 
 
 class TestNetworking(unittest.TestCase):
@@ -16,11 +22,34 @@ class TestNetworking(unittest.TestCase):
         return virtual_network.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]
 
     @pulumi.runtime.test
+    def test_network_security_group_allows_inbound_ssh_from_internet(self):
+        def check(security_rules: list) -> None:
+            self.assertEqual(len(security_rules), 1)
+            rule = security_rules[0]
+            self.assertEqual(rule.direction, "Inbound")
+            self.assertEqual(rule.access, "Allow")
+            self.assertEqual(rule.protocol, "Tcp")
+            self.assertEqual(rule.source_address_prefix, "Internet")
+            self.assertEqual(rule.destination_port_range, "22")
+
+        return network_security_group.security_rules.apply(check)  # ty: ignore[missing-argument, invalid-argument-type]
+
+    @pulumi.runtime.test
     def test_vm_subnet_urn(self):
         def check_urn(urn: str) -> None:
             self.assertIn("rse-vm-subnet", urn)
 
         return vm_subnet.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]
+
+    @pulumi.runtime.test
+    def test_vm_subnet_uses_the_network_security_group(self):
+        def check(args: tuple) -> None:
+            subnet_nsg_id, nsg_id = args
+            self.assertEqual(subnet_nsg_id, nsg_id)
+
+        return pulumi.Output.all(  # ty: ignore[missing-argument]
+            vm_subnet.network_security_group.id, network_security_group.id
+        ).apply(check)  # ty: ignore[invalid-argument-type]
 
     @pulumi.runtime.test
     def test_public_ip_is_standard_sku_with_static_allocation(self):

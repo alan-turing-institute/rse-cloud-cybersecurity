@@ -12,7 +12,13 @@ from infra.database import (
     sql_firewall_rule,
     sql_server,
 )
-from infra.networking import network_interface, public_ip, virtual_network, vm_subnet
+from infra.networking import (
+    network_interface,
+    network_security_group,
+    public_ip,
+    virtual_network,
+    vm_subnet,
+)
 from infra.resource_group import resource_group
 from infra.storage import blob_container, storage_account
 
@@ -21,6 +27,7 @@ __all__ = [
     "blob_container",
     "db_admin_password",
     "network_interface",
+    "network_security_group",
     "public_ip",
     "resource_group",
     "sql_database",

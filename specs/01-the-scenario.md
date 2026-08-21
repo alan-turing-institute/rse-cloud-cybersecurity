@@ -10,7 +10,7 @@ A minimum-cost Azure environment, built with the [tech stack](tech-stack.md), co
 ## Design principles
 
 - **Minimum cost first.** Every SKU/tier choice below picks the cheapest option that still satisfies the scenario — including the choice of RDBMS itself: **Azure SQL Database, Basic tier (DTU-based)** is the cheapest managed relational database Azure offers (~$5/month), undercutting the cheapest Postgres/MySQL Flexible Server Burstable tier (~$12–15/month compute alone).
-- **This is the initial setup — security is deliberately out of scope for now.** No managed identities, no RBAC role assignments, no VNet, no NSG, no Azure Bastion. The virtual machine, storage account, and database are all reachable directly over the public internet. Security hardening (private networking, managed identity, least-privilege RBAC, restricted access) is planned as a **later iteration**, not part of this scenario.
+- **This is the initial setup — security is deliberately out of scope for now.** No managed identities, no RBAC role assignments, no VNet segmentation, no Azure Bastion. The virtual machine, storage account, and database are all reachable directly over the public internet. The one exception is a minimal NSG on the VM subnet that allows inbound SSH (port 22) from any internet-connected computer — needed simply so the VM is reachable for the demo; it is not a security boundary (it allows SSH from `0.0.0.0/0`) and all other ports remain open via the default allow-all rules. Security hardening (private networking, managed identity, least-privilege RBAC, restricted access, narrowing this NSG to a trusted IP range) is planned as a **later iteration**, not part of this scenario.
 - The database uses **SQL authentication (username/password)** — Basic tier's DTU model doesn't change this; it's the standard way to authenticate to it.
 - The virtual machine runs **Linux** and also uses **password authentication** (not an SSH key) — SSH key auth is a hardening step deferred to a later iteration along with the rest of the security work.
 - Single resource group, single region (config `azure-native:location`, currently `westeurope`), single environment (`dev` stack) — no multi-region or HA requirements for this scenario.
@@ -36,14 +36,15 @@ All resources go in the existing `rse-cloud-cybersecurity-rg` resource group. Cl
 
 ### Networking
 
-Azure VMs must sit in a VNet/subnet regardless of security posture, so a minimal VNet is still needed purely as a platform requirement — no NSG is attached, so nothing is filtered.
+Azure VMs must sit in a VNet/subnet regardless of security posture, so a minimal VNet is still needed purely as a platform requirement. SSH connectivity to the VM currently doesn't work, so a minimal NSG is attached to the VM subnet allowing inbound SSH from anywhere — it is not meant as a security boundary, just enough to make the VM reachable; every other port is still open via the default allow-all rules.
 
 | Resource | Class | Notes |
 |---|---|---|
 | Virtual network | `network.VirtualNetwork` | One VNet, address space e.g. `10.0.0.0/16`. |
-| VM subnet | `network.Subnet` | e.g. `10.0.1.0/24`. No NSG attached — all inbound/outbound traffic is allowed. |
+| Network security group | `network.NetworkSecurityGroup` | One inbound rule: allow TCP port 22 (SSH) from source `Internet` (or `*`/`0.0.0.0/0`), priority e.g. `100`, `access=Allow`, `direction=Inbound`. No other rules — everything else falls through to the default allow-all rules, so this does not otherwise restrict traffic. |
+| VM subnet | `network.Subnet` | e.g. `10.0.1.0/24`. `network_security_group` set to the NSG above. |
 | Public IP | `network.PublicIPAddress` | `sku=PublicIPAddressSkuArgs(name=PublicIPAddressSkuName.STANDARD)`, `public_ip_allocation_method=IPAllocationMethod.STATIC` (Standard SKU requires static; Basic SKU is retired). |
-| NIC | `network.NetworkInterface` | Attaches the VM subnet + public IP. No NSG. |
+| NIC | `network.NetworkInterface` | Attaches the VM subnet + public IP. |
 
 The database does **not** use this VNet — see below, it gets its own public endpoint.
 

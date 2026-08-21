@@ -1,8 +1,10 @@
 """Networking resources for the virtual machine.
 
-No NSG is attached at this stage: the VM is meant to be reachable directly
-over the public internet (see specs/01-the-scenario.md - security hardening
-is a later iteration).
+The VM is meant to be reachable directly over the public internet (see
+specs/01-the-scenario.md - security hardening is a later iteration). The one
+exception is a minimal NSG allowing inbound SSH from anywhere, added purely
+so the VM is reachable for the demo - it is not a security boundary, and
+every other port stays open via the default allow-all rules.
 """
 
 from pulumi_azure_native import network
@@ -15,11 +17,32 @@ virtual_network = network.VirtualNetwork(
     address_space=network.AddressSpaceArgs(address_prefixes=["10.0.0.0/16"]),
 )
 
+network_security_group = network.NetworkSecurityGroup(
+    "rse-vm-nsg",
+    resource_group_name=resource_group.name,
+    security_rules=[
+        network.SecurityRuleArgs(
+            name="allow-ssh-from-internet",
+            priority=100,
+            direction=network.SecurityRuleDirection.INBOUND,
+            access=network.SecurityRuleAccess.ALLOW,
+            protocol=network.SecurityRuleProtocol.TCP,
+            source_address_prefix="Internet",
+            source_port_range="*",
+            destination_address_prefix="*",
+            destination_port_range="22",
+        )
+    ],
+)
+
 vm_subnet = network.Subnet(
     "rse-vm-subnet",
     resource_group_name=resource_group.name,
     virtual_network_name=virtual_network.name,
     address_prefix="10.0.1.0/24",
+    network_security_group=network.NetworkSecurityGroupArgs(
+        id=network_security_group.id
+    ),
 )
 
 public_ip = network.PublicIPAddress(
