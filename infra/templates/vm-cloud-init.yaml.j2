@@ -4,8 +4,12 @@ packages:
   - wget
   - gpg
   - xfce4
+  - xfce4-session
   - xrdp
 runcmd:
+  - adduser xrdp ssl-cert
+  - echo xfce4-session > /home/{{ admin_username }}/.xsession
+  - chown {{ admin_username }}:{{ admin_username }} /home/{{ admin_username }}/.xsession
   - systemctl enable --now xrdp
   - wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-vscode.gpg
   - "printf 'Types: deb\\nURIs: https://packages.microsoft.com/repos/code\\nSuites: stable\\nComponents: main\\nArchitectures: amd64,arm64,armhf\\nSigned-By: /usr/share/keyrings/microsoft-vscode.gpg\\n' > /etc/apt/sources.list.d/vscode.sources"
