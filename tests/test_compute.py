@@ -71,6 +71,20 @@ class TestCompute(unittest.TestCase):
         )
 
     @pulumi.runtime.test
+    def test_custom_data_installs_no_cli_fallback_tooling(self):
+        def check(os_profile) -> None:
+            cloud_init = base64.b64decode(os_profile.custom_data).decode()
+            # VS Code is the only supported way to reach storage/the
+            # database - no Azure CLI or sqlcmd installed as a backup path.
+            self.assertNotIn("azure-cli", cloud_init)
+            self.assertNotIn("mssql-tools", cloud_init)
+            self.assertNotIn("sqlcmd", cloud_init)
+
+        return virtual_machine.os_profile.apply(  # ty: ignore[missing-argument]
+            check  # ty: ignore[invalid-argument-type]
+        )
+
+    @pulumi.runtime.test
     def test_custom_data_pre_creates_the_mssql_connection_profile(self):
         def check(os_profile) -> None:
             cloud_init = base64.b64decode(os_profile.custom_data).decode()

@@ -1,0 +1,18 @@
+#cloud-config
+package_update: true
+packages:
+  - wget
+  - gpg
+  - xfce4
+  - xrdp
+runcmd:
+  - systemctl enable --now xrdp
+  - wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-vscode.gpg
+  - "printf 'Types: deb\\nURIs: https://packages.microsoft.com/repos/code\\nSuites: stable\\nComponents: main\\nArchitectures: amd64,arm64,armhf\\nSigned-By: /usr/share/keyrings/microsoft-vscode.gpg\\n' > /etc/apt/sources.list.d/vscode.sources"
+  - apt-get update
+  - apt-get install -y code
+  - sudo -u {{ admin_username }} -H code --install-extension ms-mssql.mssql --force
+  - sudo -u {{ admin_username }} -H code --install-extension ms-azuretools.vscode-azurestorage --force
+  - mkdir -p /home/{{ admin_username }}/.config/Code/User
+  - echo '{{ vscode_settings_b64 }}' | base64 -d > /home/{{ admin_username }}/.config/Code/User/settings.json
+  - chown -R {{ admin_username }}:{{ admin_username }} /home/{{ admin_username }}/.config
