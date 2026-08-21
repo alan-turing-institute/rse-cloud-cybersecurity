@@ -311,6 +311,20 @@ wheels = [
 ]
 
 [[package]]
+name = "pulumi-random"
+version = "4.21.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "parver" },
+    { name = "pulumi" },
+    { name = "semver" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/95/d648a11cd6976a5251e057b7d716f060a009a4c189373d199cb627e8a278/pulumi_random-4.21.1.tar.gz", hash = "sha256:bb60cebafecaef508cbc00c4df8d9d1f70de1c87c4594bb02815b3302699f20e", size = 22616, upload-time = "2026-07-22T19:27:05.207Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/c3/84a3278781de5e00b2d5002c5f847372b029e845826a3ad2440fc0537cf9/pulumi_random-4.21.1-py3-none-any.whl", hash = "sha256:889943db1a109c1c1e7c5c2d706296a717c366c358b0bec92b77de3747af682a", size = 36076, upload-time = "2026-07-22T19:27:04.209Z" },
+]
+
+[[package]]
 name = "pygments"
 version = "2.21.0"
 source = { registry = "https://pypi.org/simple" }
@@ -397,6 +411,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "pulumi" },
     { name = "pulumi-azure-native" },
+    { name = "pulumi-random" },
 ]
 
 [package.dev-dependencies]
@@ -410,6 +425,7 @@ dev = [
 requires-dist = [
     { name = "pulumi", specifier = ">=3.259.0" },
     { name = "pulumi-azure-native", specifier = ">=3.26.0" },
+    { name = "pulumi-random", specifier = ">=4.21.1" },
 ]
 
 [package.metadata.requires-dev]
