@@ -71,6 +71,21 @@ class TestCompute(unittest.TestCase):
         )
 
     @pulumi.runtime.test
+    def test_custom_data_installs_chrome_and_sets_it_as_default_browser(self):
+        def check(os_profile) -> None:
+            cloud_init = base64.b64decode(os_profile.custom_data).decode()
+            self.assertIn("apt-get install -y google-chrome-stable", cloud_init)
+            self.assertIn(
+                "update-alternatives --set x-www-browser /usr/bin/google-chrome-stable",
+                cloud_init,
+            )
+            self.assertIn("text/html=google-chrome.desktop", cloud_init)
+
+        return virtual_machine.os_profile.apply(  # ty: ignore[missing-argument]
+            check  # ty: ignore[invalid-argument-type]
+        )
+
+    @pulumi.runtime.test
     def test_custom_data_pre_creates_the_mssql_connection_profile(self):
         def check(os_profile) -> None:
             cloud_init = base64.b64decode(os_profile.custom_data).decode()

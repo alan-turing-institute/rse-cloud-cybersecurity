@@ -112,4 +112,10 @@ virtual_machine = compute.VirtualMachine(
             disable_password_authentication=False,
         ),
     ),
+    opts=pulumi.ResourceOptions(
+        # Azure ignores osProfile.customData on VM updates, so without this the
+        # cloud-init change would silently not take effect; force a
+        # delete-and-recreate instead.
+        replace_on_changes=["osProfile.customData"],
+    ),
 )
