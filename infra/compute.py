@@ -117,5 +117,6 @@ virtual_machine = compute.VirtualMachine(
         # cloud-init change would silently not take effect; force a
         # delete-and-recreate instead.
         replace_on_changes=["osProfile.customData"],
+        delete_before_replace=True,
     ),
 )
