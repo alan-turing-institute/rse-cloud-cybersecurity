@@ -1,0 +1,30 @@
+#cloud-config
+package_update: true
+packages:
+  - wget
+  - gpg
+  - xfce4
+  - xfce4-session
+  - xrdp
+runcmd:
+  - adduser xrdp ssl-cert
+  - echo xfce4-session > /home/{{ admin_username }}/.xsession
+  - chown {{ admin_username }}:{{ admin_username }} /home/{{ admin_username }}/.xsession
+  - systemctl enable --now xrdp
+  - wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-vscode.gpg
+  - "printf 'Types: deb\\nURIs: https://packages.microsoft.com/repos/code\\nSuites: stable\\nComponents: main\\nArchitectures: amd64,arm64,armhf\\nSigned-By: /usr/share/keyrings/microsoft-vscode.gpg\\n' > /etc/apt/sources.list.d/vscode.sources"
+  - apt-get update
+  - apt-get install -y code
+  - sudo -u {{ admin_username }} -H code --install-extension ms-mssql.mssql --force
+  - sudo -u {{ admin_username }} -H code --install-extension ms-azuretools.vscode-azurestorage --force
+  - mkdir -p /home/{{ admin_username }}/.config/Code/User
+  - echo '{{ vscode_settings_b64 }}' | base64 -d > /home/{{ admin_username }}/.config/Code/User/settings.json
+  - wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
+  - "printf 'Types: deb\\nURIs: https://dl.google.com/linux/chrome/deb/\\nSuites: stable\\nComponents: main\\nArchitectures: amd64\\nSigned-By: /usr/share/keyrings/google-chrome.gpg\\n' > /etc/apt/sources.list.d/google-chrome.sources"
+  - apt-get update
+  - apt-get install -y google-chrome-stable
+  - update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/google-chrome-stable 200
+  - update-alternatives --set x-www-browser /usr/bin/google-chrome-stable
+  - mkdir -p /home/{{ admin_username }}/.config
+  - "printf '[Default Applications]\\ntext/html=google-chrome.desktop\\nx-scheme-handler/http=google-chrome.desktop\\nx-scheme-handler/https=google-chrome.desktop\\nx-scheme-handler/about=google-chrome.desktop\\nx-scheme-handler/unknown=google-chrome.desktop\\n' > /home/{{ admin_username }}/.config/mimeapps.list"
+  - chown -R {{ admin_username }}:{{ admin_username }} /home/{{ admin_username }}/.config
