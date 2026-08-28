@@ -4,8 +4,9 @@ import pulumi
 from pulumi_azure_native import storage
 
 from infra import (
+    bastion_host,
+    bastion_public_ip,
     db_admin_password,
-    public_ip,
     resource_group,
     sql_server,
     storage_account,
@@ -27,5 +28,8 @@ pulumi.export(
 pulumi.export("sql_server_fqdn", sql_server.fully_qualified_domain_name)
 pulumi.export("db_admin_password", pulumi.Output.secret(db_admin_password.result))
 pulumi.export("vm_name", virtual_machine.name)
-pulumi.export("vm_public_ip", public_ip.ip_address)
+pulumi.export("vm_id", virtual_machine.id)
 pulumi.export("vm_admin_password", pulumi.Output.secret(vm_admin_password.result))
+pulumi.export("bastion_name", bastion_public_ip.ip_address)
+pulumi.export("bastion_id", bastion_host.id)
+pulumi.export("bastion_public_ip", bastion_host.name)
