@@ -57,13 +57,6 @@ vm_subnet = network.Subnet(
     ),
 )
 
-public_ip = network.PublicIPAddress(
-    "rse-vm-public-ip",
-    resource_group_name=resource_group.name,
-    sku=network.PublicIPAddressSkuArgs(name=network.PublicIPAddressSkuName.STANDARD),
-    public_ip_allocation_method=network.IPAllocationMethod.STATIC,
-)
-
 network_interface = network.NetworkInterface(
     "rse-vm-nic",
     resource_group_name=resource_group.name,
@@ -71,7 +64,6 @@ network_interface = network.NetworkInterface(
         network.NetworkInterfaceIPConfigurationArgs(
             name="rse-vm-ip-config",
             subnet=network.SubnetArgs(id=vm_subnet.id),
-            public_ip_address=network.PublicIPAddressArgs(id=public_ip.id),
         )
     ],
 )

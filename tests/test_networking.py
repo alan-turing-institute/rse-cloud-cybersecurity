@@ -7,7 +7,6 @@ import pulumi
 from infra.networking import (
     network_interface,
     network_security_group,
-    public_ip,
     virtual_network,
     vm_subnet,
 )
@@ -55,14 +54,17 @@ class TestNetworking(unittest.TestCase):
         ).apply(check)  # ty: ignore[invalid-argument-type]
 
     @pulumi.runtime.test
-    def test_public_ip_is_standard_sku_with_static_allocation(self):
-        def check(args: tuple) -> None:
-            sku, allocation_method = args
-            self.assertEqual(sku["name"], "Standard")
-            self.assertEqual(allocation_method, "Static")
+    def test_vm_has_no_public_ip(self):
+        def check(ip_configurations: list) -> None:
+            for ip_configuration in ip_configurations:
+                for configuration in ip_configuration:
+                    if configuration["name"] == "rse-vm-ip-config":
+                        self.assertEqual(
+                            configuration.get("public_ip_address", None), None
+                        )
 
         return pulumi.Output.all(  # ty: ignore[missing-argument]
-            public_ip.sku, public_ip.public_ip_allocation_method
+            network_interface.ip_configurations
         ).apply(check)  # ty: ignore[invalid-argument-type]
 
     @pulumi.runtime.test
