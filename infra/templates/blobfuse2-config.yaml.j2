@@ -1,5 +1,12 @@
 allow-other: true
 
+# Blobs in this container can be added/changed outside BlobFuse2 entirely
+# (the retained storage account key, the Portal, Storage Explorer) - disable
+# the kernel's own dentry/attribute cache and keep BlobFuse2's attr_cache
+# freshness at 0, or a listing/read done from the mount can keep showing
+# stale (e.g. empty) results after an external change.
+disable-kernel-cache: true
+
 components:
   - libfuse
   - file_cache
@@ -9,6 +16,9 @@ components:
 file_cache:
   path: /var/cache/blobfuse2/rse-demo-container
   timeout-sec: 120
+
+attr_cache:
+  timeout-sec: 0
 
 azstorage:
   type: block

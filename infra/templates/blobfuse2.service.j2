@@ -6,7 +6,7 @@ Requires=network-online.target
 [Service]
 Type=simple
 ExecStart=/usr/bin/blobfuse2 mount {{ mount_path }} \
-    --config-file={{ config_path }} --read-only=true
+    --config-file={{ config_path }} --read-only=true --foreground=true
 ExecStop=/usr/bin/blobfuse2 unmount {{ mount_path }}
 Restart=on-failure
 RestartSec=15

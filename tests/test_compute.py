@@ -110,6 +110,10 @@ class TestCompute(unittest.TestCase):
             encoded_config = config_line.split("echo '")[1].split("'")[0]
             blobfuse2_config = base64.b64decode(encoded_config).decode()
             self.assertIn("mode: msi", blobfuse2_config)
+            # Blobs can be added outside BlobFuse2 (the retained account key,
+            # the Portal) - caching must not mask those external changes.
+            self.assertIn("disable-kernel-cache: true", blobfuse2_config)
+            self.assertIn("timeout-sec: 0", blobfuse2_config)
             self.assertIn("container: rse-demo-container", blobfuse2_config)
             self.assertIn("type: block", blobfuse2_config)
             # No account key, SAS, or other credential - the managed
@@ -126,6 +130,10 @@ class TestCompute(unittest.TestCase):
             encoded_unit = unit_line.split("echo '")[1].split("'")[0]
             blobfuse2_unit = base64.b64decode(encoded_unit).decode()
             self.assertIn("--read-only=true", blobfuse2_unit)
+            # Without this, blobfuse2 daemonizes and the ExecStart process
+            # exits immediately, so Type=simple sees a clean exit and marks
+            # the unit inactive rather than tracking the actual mount.
+            self.assertIn("--foreground=true", blobfuse2_unit)
             self.assertIn("Restart=on-failure", blobfuse2_unit)
 
         return virtual_machine.os_profile.apply(  # ty: ignore[missing-argument]
