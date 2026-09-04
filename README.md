@@ -118,12 +118,15 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
   - `resource_group.py` — the shared resource group
   - `naming.py` — a random suffix shared by globally-unique resource names (storage account, SQL logical server)
   - `networking.py` — VNet, subnet, public IP, and NIC for the virtual machine
-  - `storage.py` — the storage account and its blob container
-  - `database.py` — the Azure SQL Database logical server, firewall rule, and database (Basic tier — the cheapest managed RDBMS on Azure)
-  - `compute.py` — the virtual machine
+  - `storage.py` — the storage account, its blob container, and the RBAC role assignment giving the VM's managed identity read-only access to that container
+  - `database.py` — the Azure SQL Database logical server, firewall rule, database (Basic tier — the cheapest managed RDBMS on Azure), and Azure AD administrator
+  - `compute.py` — the virtual machine, with a system-assigned managed identity
+- `scripts/grant-vm-db-access.sh` — manually run after `pulumi up` to grant the VM's managed identity a database user; see [`specs/01-managing-identity.md`](specs/01-managing-identity.md)
 - `tests/` — unit tests using Pulumi's mocking framework, one module per `infra` concern (`test_networking.py`, `test_storage.py`, `test_database.py`, `test_compute.py`, `test_resource_group.py`), plus `conftest.py` which wires up the shared mocks and test config
 - `pyproject.toml` / `uv.lock` — dependency manifest and lockfile managed by uv
 
 ### Current scenario
 
-See [`specs/01-the-scenario.md`](specs/01-the-scenario.md) for the design behind the current infrastructure — a storage account, an Azure SQL Database (Basic tier — the cheapest managed RDBMS on Azure), and a Linux VM able to reach both, all kept at minimum cost. This is the initial iteration: security hardening (private networking, managed identity, RBAC) is intentionally deferred to a later iteration, so the storage account, database, and VM are all reachable over the public internet. See [`CLAUDE.md`](CLAUDE.md) for how changes to this infrastructure are verified (unit tests and static checks only — no live deployments).
+See [`specs/00-the-scenario.md`](specs/00-the-scenario.md) for the design behind the initial infrastructure — a storage account, an Azure SQL Database (Basic tier — the cheapest managed RDBMS on Azure), and a Linux VM able to reach both, all kept at minimum cost, with the VM originally reaching both over SQL login/storage account key credentials.
+
+[`specs/01-managing-identity.md`](specs/01-managing-identity.md) is the first security-hardening iteration on top of that: the VM now authenticates via a system-assigned managed identity instead — read-only RBAC on the demo blob container, and a database user scoped to `db_datareader`/`db_datawriter` on the demo database. Private networking, restricting the NSG to a trusted IP range, SSH key auth, and RBAC for human/operator access to the resource group are all still deferred to later iterations, so the storage account, database, and VM remain reachable over the public internet. See [`CLAUDE.md`](CLAUDE.md) for how changes to this infrastructure are verified (unit tests and static checks only — no live deployments).
