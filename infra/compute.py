@@ -1,6 +1,6 @@
 """Linux virtual machine reachable over RDP with a graphical desktop, and VS
 Code pre-installed as the primary way to reach the SQL database (see
-specs/01-the-scenario.md and specs/03-managing-identity-database.md).
+specs/01-the-scenario.md).
 
 The VM's own storage access uses its system-assigned managed identity
 (specs/02-managing-identity-storage.md): rse-demo-container is mounted
