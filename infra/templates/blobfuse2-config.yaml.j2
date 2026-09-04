@@ -1,0 +1,18 @@
+allow-other: true
+
+components:
+  - libfuse
+  - file_cache
+  - attr_cache
+  - azstorage
+
+file_cache:
+  path: /var/cache/blobfuse2/rse-demo-container
+  timeout-sec: 120
+
+azstorage:
+  type: block
+  account-name: {{ storage_account_name }}
+  container: rse-demo-container
+  endpoint: https://{{ storage_account_name }}.blob.core.windows.net
+  mode: msi
