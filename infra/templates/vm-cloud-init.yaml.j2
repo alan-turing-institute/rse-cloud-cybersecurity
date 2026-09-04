@@ -28,3 +28,13 @@ runcmd:
   - mkdir -p /home/{{ admin_username }}/.config
   - "printf '[Default Applications]\\ntext/html=google-chrome.desktop\\nx-scheme-handler/http=google-chrome.desktop\\nx-scheme-handler/https=google-chrome.desktop\\nx-scheme-handler/about=google-chrome.desktop\\nx-scheme-handler/unknown=google-chrome.desktop\\n' > /home/{{ admin_username }}/.config/mimeapps.list"
   - chown -R {{ admin_username }}:{{ admin_username }} /home/{{ admin_username }}/.config
+  - wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+  - dpkg -i /tmp/packages-microsoft-prod.deb
+  - apt-get update
+  - apt-get install -y fuse3 blobfuse2
+  - sed -i 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
+  - mkdir -p /etc/blobfuse2 /var/cache/blobfuse2/rse-demo-container {{ blobfuse2_mount_path }}
+  - echo '{{ blobfuse2_config_b64 }}' | base64 -d > {{ blobfuse2_config_path }}
+  - echo '{{ blobfuse2_unit_b64 }}' | base64 -d > /etc/systemd/system/{{ blobfuse2_service_name }}
+  - systemctl daemon-reload
+  - systemctl enable --now {{ blobfuse2_service_name }}

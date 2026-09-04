@@ -4,7 +4,11 @@ Re-exports every resource at the package level so `__main__.py` and the test
 suite can import from `infra` directly, e.g. `from infra import storage_account`.
 """
 
-from infra.compute import virtual_machine, vm_admin_password
+from infra.compute import (
+    storage_blob_data_reader_role_assignment,
+    virtual_machine,
+    vm_admin_password,
+)
 from infra.database import (
     admin_username,
     db_admin_password,
@@ -34,6 +38,7 @@ __all__ = [
     "sql_firewall_rule",
     "sql_server",
     "storage_account",
+    "storage_blob_data_reader_role_assignment",
     "virtual_machine",
     "virtual_network",
     "vm_admin_password",

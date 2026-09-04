@@ -22,6 +22,8 @@ class AzureMocks(pulumi.runtime.Mocks):
         return [f"{args.name}_id", outputs]
 
     def call(self, args: pulumi.runtime.MockCallArgs):
+        if args.token == "azure-native:authorization:getClientConfig":
+            return {"subscriptionId": "00000000-0000-0000-0000-000000000000"}
         return {}
 
 
