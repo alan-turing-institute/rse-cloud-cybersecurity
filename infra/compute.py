@@ -1,28 +1,19 @@
-"""Linux virtual machine reachable over RDP with a graphical desktop. The VM
-has a system-assigned managed identity (see specs/01-managing-identity.md)
-that it uses, via RBAC, to read from the storage account and, via Azure AD
-authentication, to read/write the SQL database - no API key or SQL login
-password for either path.
-
-VS Code is pre-installed with the storage and mssql extensions, but the
-`ms-mssql.mssql` extension has no authentication type that can actually ride
-the VM's managed identity (its `mssql.connections[].authenticationType`
-schema only supports SqlLogin/Integrated/AzureMFA/
-ActiveDirectoryServicePrincipal - confirmed against the extension's own
-package.json). The pre-created mssql profile uses AzureMFA, the closest
-available option, but that means the operator signing in interactively as
-themselves, not the VM's identity. `sqlcmd` (go-sqlcmd) is also installed,
-since `sqlcmd --authentication-method ActiveDirectoryManagedIdentity` is the
-only path on this VM that genuinely uses the managed identity for database
-access (see specs/01-managing-identity.md for the full research).
+"""Linux virtual machine reachable over RDP with a graphical desktop, and VS
+Code pre-installed as the *only* way to reach the storage account and the
+SQL database (see specs/01-the-scenario.md - no Azure CLI/sqlcmd fallback,
+no managed identity/RBAC yet).
 
 Uses password authentication rather than an SSH key, in line with delaying
-that piece of security hardening to a later iteration.
+security hardening to a later iteration.
 
-The Azure Storage extension has no documented settings.json key for
-pre-attaching an account, so the operator attaches it once via "Attach
-Storage Account..." using Azure AD sign-in (or, for management purposes,
-the storage account key handed out as a secret stack output).
+The mssql connection profile is pre-created (server/database/username), but
+- per the extension's own documented behaviour - the password isn't
+something that can be pre-seeded into settings.json; it's entered once on
+first connect and then remembered via VS Code's secret storage
+(savePassword=true). Likewise the Azure Storage extension has no documented
+settings.json key for pre-attaching an account, so the operator attaches it
+once via "Attach Storage Account..." using the connection string handed out
+as a secret stack output.
 """
 
 import base64
@@ -34,6 +25,7 @@ import pulumi
 import pulumi_random
 from pulumi_azure_native import compute
 
+from infra.database import admin_username as db_admin_username
 from infra.database import sql_database, sql_server
 from infra.networking import network_interface
 from infra.resource_group import resource_group
@@ -63,7 +55,10 @@ def _vscode_settings_json(sql_server_fqdn: str, database_name: str) -> str:
                     "profileName": _MSSQL_PROFILE_NAME,
                     "server": sql_server_fqdn,
                     "database": database_name,
-                    "authenticationType": "AzureMFA",
+                    "authenticationType": "SqlLogin",
+                    "user": db_admin_username,
+                    "password": "",
+                    "savePassword": True,
                     "encrypt": "Mandatory",
                 }
             ]
@@ -88,9 +83,6 @@ custom_data = pulumi.Output.all(  # ty: ignore[missing-argument]
 virtual_machine = compute.VirtualMachine(
     "rse-vm",
     resource_group_name=resource_group.name,
-    identity=compute.VirtualMachineIdentityArgs(
-        type=compute.ResourceIdentityType.SYSTEM_ASSIGNED
-    ),
     hardware_profile=compute.HardwareProfileArgs(vm_size="Standard_B2s"),
     network_profile=compute.NetworkProfileArgs(
         network_interfaces=[

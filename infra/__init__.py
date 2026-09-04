@@ -11,7 +11,6 @@ from infra.database import (
     sql_database,
     sql_firewall_rule,
     sql_server,
-    sql_server_aad_administrator,
 )
 from infra.networking import (
     network_interface,
@@ -21,7 +20,7 @@ from infra.networking import (
     vm_subnet,
 )
 from infra.resource_group import resource_group
-from infra.storage import blob_container, storage_account, vm_storage_role_assignment
+from infra.storage import blob_container, storage_account
 
 __all__ = [
     "admin_username",
@@ -34,11 +33,9 @@ __all__ = [
     "sql_database",
     "sql_firewall_rule",
     "sql_server",
-    "sql_server_aad_administrator",
     "storage_account",
     "virtual_machine",
     "virtual_network",
     "vm_admin_password",
-    "vm_storage_role_assignment",
     "vm_subnet",
 ]

@@ -1,7 +1,7 @@
 """Networking resources for the virtual machine.
 
 The VM is meant to be reachable directly over the public internet (see
-specs/00-the-scenario.md - security hardening is a later iteration). The one
+specs/01-the-scenario.md - security hardening is a later iteration). The one
 exception is a minimal NSG allowing inbound SSH and RDP from anywhere, added
 purely so the VM (and its graphical desktop) is reachable for the demo - it
 is not a security boundary, and every other port stays open via the default

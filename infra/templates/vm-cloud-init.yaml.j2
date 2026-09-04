@@ -28,7 +28,3 @@ runcmd:
   - mkdir -p /home/{{ admin_username }}/.config
   - "printf '[Default Applications]\\ntext/html=google-chrome.desktop\\nx-scheme-handler/http=google-chrome.desktop\\nx-scheme-handler/https=google-chrome.desktop\\nx-scheme-handler/about=google-chrome.desktop\\nx-scheme-handler/unknown=google-chrome.desktop\\n' > /home/{{ admin_username }}/.config/mimeapps.list"
   - chown -R {{ admin_username }}:{{ admin_username }} /home/{{ admin_username }}/.config
-  - wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
-  - "printf 'Types: deb\\nURIs: https://packages.microsoft.com/ubuntu/22.04/prod\\nSuites: jammy\\nComponents: main\\nArchitectures: amd64,arm64,armhf\\nSigned-By: /usr/share/keyrings/microsoft-prod.gpg\\n' > /etc/apt/sources.list.d/microsoft-prod.sources"
-  - apt-get update
-  - apt-get install -y sqlcmd
