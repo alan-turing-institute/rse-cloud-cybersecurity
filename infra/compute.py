@@ -36,6 +36,7 @@ _MSSQL_PROFILE_NAME = "rse-demo-db"
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _CLOUD_INIT_TEMPLATE_PATH = _TEMPLATES_DIR / "vm-cloud-init.yaml.j2"
 _BLOBFUSE2_CONFIG_TEMPLATE_PATH = _TEMPLATES_DIR / "blobfuse2-config.yaml.j2"
+_BLOBFUSE2_UNIT_TEMPLATE_PATH = _TEMPLATES_DIR / "blobfuse2.service.j2"
 
 _BLOBFUSE2_MOUNT_PATH = "/mnt/rse-demo-container"
 _BLOBFUSE2_CONFIG_PATH = "/etc/blobfuse2/rse-demo-container.yaml"
@@ -44,23 +45,6 @@ _BLOBFUSE2_SERVICE_NAME = "blobfuse2-rse-demo-container.service"
 # Storage Blob Data Reader - a fixed, well-known built-in role GUID, same
 # across all Azure tenants.
 _STORAGE_BLOB_DATA_READER_ROLE_GUID = "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
-
-_BLOBFUSE2_SYSTEMD_UNIT = f"""[Unit]
-Description=Mount rse-demo-container via BlobFuse2 (managed identity)
-After=network-online.target
-Requires=network-online.target
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/blobfuse2 mount {_BLOBFUSE2_MOUNT_PATH} \\
-    --config-file={_BLOBFUSE2_CONFIG_PATH} --read-only=true
-ExecStop=/usr/bin/blobfuse2 unmount {_BLOBFUSE2_MOUNT_PATH}
-Restart=on-failure
-RestartSec=15
-
-[Install]
-WantedBy=multi-user.target
-"""
 
 config = pulumi.Config()
 admin_username = config.get("vm-admin-username") or "azureuser"
@@ -76,6 +60,7 @@ _cloud_init_template = jinja2.Template(_CLOUD_INIT_TEMPLATE_PATH.read_text())
 _blobfuse2_config_template = jinja2.Template(
     _BLOBFUSE2_CONFIG_TEMPLATE_PATH.read_text()
 )
+_blobfuse2_unit_template = jinja2.Template(_BLOBFUSE2_UNIT_TEMPLATE_PATH.read_text())
 
 
 def _vscode_settings_json(sql_server_fqdn: str, database_name: str) -> str:
@@ -106,7 +91,10 @@ def _custom_data(
         storage_account_name=storage_account_name
     )
     blobfuse2_config_b64 = base64.b64encode(blobfuse2_config_yaml.encode()).decode()
-    blobfuse2_unit_b64 = base64.b64encode(_BLOBFUSE2_SYSTEMD_UNIT.encode()).decode()
+    blobfuse2_unit = _blobfuse2_unit_template.render(
+        mount_path=_BLOBFUSE2_MOUNT_PATH, config_path=_BLOBFUSE2_CONFIG_PATH
+    )
+    blobfuse2_unit_b64 = base64.b64encode(blobfuse2_unit.encode()).decode()
     cloud_init = _cloud_init_template.render(
         admin_username=admin_username,
         vscode_settings_b64=vscode_settings_b64,
