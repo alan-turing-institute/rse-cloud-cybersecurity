@@ -8,9 +8,21 @@ is not a security boundary, and every other port stays open via the default
 allow-all rules.
 """
 
+from pulumi import ResourceOptions
 from pulumi_azure_native import network
 
 from infra.resource_group import resource_group
+
+# Define route table
+route_table = network.RouteTable(
+    "rse-route-table",
+    resource_group_name=resource_group.name,
+    route_table_name="rse-route-table",
+    routes=[],
+    opts=ResourceOptions(
+        ignore_changes=["routes"]
+    ),  # allow routes to be created outside this definition
+)
 
 virtual_network = network.VirtualNetwork(
     "rse-vnet",
@@ -55,6 +67,7 @@ vm_subnet = network.Subnet(
     network_security_group=network.NetworkSecurityGroupArgs(
         id=network_security_group.id
     ),
+    route_table=network.RouteTableArgs(id=route_table.id),
 )
 
 public_ip = network.PublicIPAddress(

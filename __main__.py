@@ -5,6 +5,7 @@ from pulumi_azure_native import storage
 
 from infra import (
     db_admin_password,
+    firewall_public_ip,
     public_ip,
     resource_group,
     sql_server,
@@ -29,3 +30,4 @@ pulumi.export("db_admin_password", pulumi.Output.secret(db_admin_password.result
 pulumi.export("vm_name", virtual_machine.name)
 pulumi.export("vm_public_ip", public_ip.ip_address)
 pulumi.export("vm_admin_password", pulumi.Output.secret(vm_admin_password.result))
+pulumi.export("firewall_public_ip", firewall_public_ip.ip_address)
