@@ -23,10 +23,12 @@ from pathlib import Path
 import jinja2
 import pulumi
 import pulumi_random
-from pulumi_azure_native import compute
+from pulumi import ResourceOptions
+from pulumi_azure_native import compute, monitor
 
 from infra.database import admin_username as db_admin_username
 from infra.database import sql_database, sql_server
+from infra.monitoring import data_collection_endpoint, data_collection_rule_vms
 from infra.networking import network_interface
 from infra.resource_group import resource_group
 
@@ -83,6 +85,9 @@ custom_data = pulumi.Output.all(  # ty: ignore[missing-argument]
 virtual_machine = compute.VirtualMachine(
     "rse-vm",
     resource_group_name=resource_group.name,
+    diagnostics_profile=compute.DiagnosticsProfileArgs(
+        boot_diagnostics=compute.BootDiagnosticsArgs(enabled=True)
+    ),
     hardware_profile=compute.HardwareProfileArgs(vm_size="Standard_B2s"),
     network_profile=compute.NetworkProfileArgs(
         network_interfaces=[
@@ -112,6 +117,10 @@ virtual_machine = compute.VirtualMachine(
             disable_password_authentication=False,
         ),
     ),
+    vm_name="rse-vm-workspace-vm",
+    identity=compute.VirtualMachineIdentityArgs(
+        type=compute.ResourceIdentityType.SYSTEM_ASSIGNED,
+    ),
     opts=pulumi.ResourceOptions(
         # Azure ignores osProfile.customData on VM updates, so without this the
         # cloud-init change would silently not take effect; force a
@@ -119,4 +128,36 @@ virtual_machine = compute.VirtualMachine(
         replace_on_changes=["osProfile.customData"],
         delete_before_replace=True,
     ),
+)
+
+# Register with Log Analytics workspace
+compute.VirtualMachineExtension(
+    "rse-azure-monitor-extension",
+    auto_upgrade_minor_version=True,
+    enable_automatic_upgrade=True,
+    publisher="Microsoft.Azure.Monitor",
+    resource_group_name=resource_group.name,
+    type="AzureMonitorLinuxAgent",
+    type_handler_version="1.0",
+    vm_extension_name="AzureMonitorLinuxAgent",
+    vm_name=virtual_machine.name,
+    opts=ResourceOptions(parent=virtual_machine),
+)
+
+# Register with data collection rule
+monitor.DataCollectionRuleAssociation(
+    "rse-dcra-to-dcr",
+    association_name="rse-dcr-vms-association",  # this name is required
+    data_collection_rule_id=data_collection_rule_vms.id,
+    resource_uri=virtual_machine.id,
+    opts=ResourceOptions(parent=virtual_machine),
+)
+
+# Register with data collection endpoint
+monitor.DataCollectionRuleAssociation(
+    "rse-dcra-to-dce",
+    association_name="configurationAccessEndpoint",  # this name is required
+    data_collection_endpoint_id=data_collection_endpoint.id,
+    resource_uri=virtual_machine.id,
+    opts=ResourceOptions(parent=virtual_machine),
 )
