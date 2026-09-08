@@ -18,6 +18,7 @@ from infra.database import (
     sql_server,
 )
 from infra.dns import monitoring_dns_zone
+from infra.firewall import firewall, firewall_public_ip
 from infra.monitoring import workspace_analytics
 from infra.networking import (
     network_interface,
@@ -35,6 +36,8 @@ __all__ = [
     "blob_container",
     "cpu_alert",
     "db_admin_password",
+    "firewall",
+    "firewall_public_ip",
     "mem_alert",
     "monitoring_dns_zone",
     "network_interface",

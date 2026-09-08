@@ -7,6 +7,7 @@ import pulumi
 from infra.networking import (
     network_interface,
     network_security_group,
+    route_table,
     virtual_network,
     vm_subnet,
 )
@@ -51,6 +52,16 @@ class TestNetworking(unittest.TestCase):
 
         return pulumi.Output.all(  # ty: ignore[missing-argument]
             vm_subnet.network_security_group.id, network_security_group.id
+        ).apply(check)  # ty: ignore[invalid-argument-type]
+
+    @pulumi.runtime.test
+    def test_vm_subnet_uses_the_route_table(self):
+        def check(args: tuple) -> None:
+            subnet_route_table_id, route_table_id = args
+            self.assertEqual(subnet_route_table_id, route_table_id)
+
+        return pulumi.Output.all(  # ty: ignore[missing-argument]
+            vm_subnet.route_table.id, route_table.id
         ).apply(check)  # ty: ignore[invalid-argument-type]
 
     @pulumi.runtime.test

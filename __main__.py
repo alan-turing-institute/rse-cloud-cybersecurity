@@ -7,6 +7,7 @@ from infra import (
     bastion_host,
     bastion_public_ip,
     db_admin_password,
+    firewall_public_ip,
     resource_group,
     sql_server,
     storage_account,
@@ -33,3 +34,4 @@ pulumi.export("vm_admin_password", pulumi.Output.secret(vm_admin_password.result
 pulumi.export("bastion_name", bastion_host.name)
 pulumi.export("bastion_id", bastion_host.id)
 pulumi.export("bastion_public_ip", bastion_public_ip.ip_address)
+pulumi.export("firewall_public_ip", firewall_public_ip.ip_address)
