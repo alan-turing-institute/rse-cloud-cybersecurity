@@ -30,6 +30,6 @@ pulumi.export("db_admin_password", pulumi.Output.secret(db_admin_password.result
 pulumi.export("vm_name", virtual_machine.name)
 pulumi.export("vm_id", virtual_machine.id)
 pulumi.export("vm_admin_password", pulumi.Output.secret(vm_admin_password.result))
-pulumi.export("bastion_name", bastion_public_ip.ip_address)
+pulumi.export("bastion_name", bastion_host.name)
 pulumi.export("bastion_id", bastion_host.id)
-pulumi.export("bastion_public_ip", bastion_host.name)
+pulumi.export("bastion_public_ip", bastion_public_ip.ip_address)

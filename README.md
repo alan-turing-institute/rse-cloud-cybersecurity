@@ -123,11 +123,13 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
 - `infra/` — infrastructure resource definitions, split by concern and re-exported from `infra/__init__.py` for `__main__.py` and the test suite:
   - `resource_group.py` — the shared resource group
   - `naming.py` — a random suffix shared by globally-unique resource names (storage account, SQL logical server)
-  - `networking.py` — VNet, subnet, public IP, and NIC for the virtual machine
+  - `networking.py` — VNet, subnet, and NIC for the virtual machine (no public IP — the VM is only reachable via the Bastion host, see below)
+  - `bastion_networking.py` — NSG, subnet, and public IP for the Azure Bastion host
+  - `bastion.py` — the Azure Bastion host itself
   - `storage.py` — the storage account and its blob container
   - `database.py` — the Azure SQL Database logical server, firewall rule, and database (Basic tier — the cheapest managed RDBMS on Azure)
   - `compute.py` — the virtual machine
-- `tests/` — unit tests using Pulumi's mocking framework, one module per `infra` concern (`test_networking.py`, `test_storage.py`, `test_database.py`, `test_compute.py`, `test_resource_group.py`), plus `conftest.py` which wires up the shared mocks and test config
+- `tests/` — unit tests using Pulumi's mocking framework, one module per `infra` concern (`test_networking.py`, `test_bastion_networking.py`, `test_bastion.py`, `test_storage.py`, `test_database.py`, `test_compute.py`, `test_resource_group.py`), plus `conftest.py` which wires up the shared mocks and test config
 - `pyproject.toml` / `uv.lock` — dependency manifest and lockfile managed by uv
 
 ### Current scenario
