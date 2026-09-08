@@ -117,7 +117,6 @@ virtual_machine = compute.VirtualMachine(
             disable_password_authentication=False,
         ),
     ),
-    vm_name="rse-vm-workspace-vm",
     identity=compute.VirtualMachineIdentityArgs(
         type=compute.ResourceIdentityType.SYSTEM_ASSIGNED,
     ),
@@ -131,7 +130,7 @@ virtual_machine = compute.VirtualMachine(
 )
 
 # Register with Log Analytics workspace
-compute.VirtualMachineExtension(
+azure_monitor_extension = compute.VirtualMachineExtension(
     "rse-azure-monitor-extension",
     auto_upgrade_minor_version=True,
     enable_automatic_upgrade=True,
@@ -145,7 +144,7 @@ compute.VirtualMachineExtension(
 )
 
 # Register with data collection rule
-monitor.DataCollectionRuleAssociation(
+data_collection_rule_association = monitor.DataCollectionRuleAssociation(
     "rse-dcra-to-dcr",
     association_name="rse-dcr-vms-association",  # this name is required
     data_collection_rule_id=data_collection_rule_vms.id,
@@ -154,7 +153,7 @@ monitor.DataCollectionRuleAssociation(
 )
 
 # Register with data collection endpoint
-monitor.DataCollectionRuleAssociation(
+data_collection_endpoint_association = monitor.DataCollectionRuleAssociation(
     "rse-dcra-to-dce",
     association_name="configurationAccessEndpoint",  # this name is required
     data_collection_endpoint_id=data_collection_endpoint.id,

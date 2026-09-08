@@ -4,7 +4,7 @@ Re-exports every resource at the package level so `__main__.py` and the test
 suite can import from `infra` directly, e.g. `from infra import storage_account`.
 """
 
-from infra.alerts import cpu_alert
+from infra.alerts import cpu_alert, mem_alert
 from infra.bastion import bastion_host
 from infra.bastion_networking import (
     bastion_public_ip,
@@ -35,6 +35,7 @@ __all__ = [
     "blob_container",
     "cpu_alert",
     "db_admin_password",
+    "mem_alert",
     "monitoring_dns_zone",
     "network_interface",
     "network_security_group",

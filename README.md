@@ -129,7 +129,10 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
   - `storage.py` — the storage account and its blob container
   - `database.py` — the Azure SQL Database logical server, firewall rule, and database (Basic tier — the cheapest managed RDBMS on Azure)
   - `compute.py` — the virtual machine
-- `tests/` — unit tests using Pulumi's mocking framework, one module per `infra` concern (`test_networking.py`, `test_bastion_networking.py`, `test_bastion.py`, `test_storage.py`, `test_database.py`, `test_compute.py`, `test_resource_group.py`), plus `conftest.py` which wires up the shared mocks and test config
+  - `monitoring.py` — the Log Analytics workspace, data collection endpoint/rule, and the private-link plumbing (subnet, private endpoint, AMPLS scope) needed to reach it without public network access
+  - `dns.py` — private DNS zones and VNet links so the VM can resolve the monitoring private endpoint
+  - `alerts.py` — the action group and CPU/memory metric alerts built on top of the workspace
+- `tests/` — unit tests using Pulumi's mocking framework, one module per `infra` concern (`test_networking.py`, `test_bastion_networking.py`, `test_bastion.py`, `test_storage.py`, `test_database.py`, `test_compute.py`, `test_resource_group.py`, `test_monitoring.py`, `test_alerts.py`, `test_dns.py`), plus `conftest.py` which wires up the shared mocks and test config
 - `pyproject.toml` / `uv.lock` — dependency manifest and lockfile managed by uv
 
 ### Current scenario

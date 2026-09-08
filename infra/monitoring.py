@@ -127,7 +127,7 @@ log_analytics_private_link_scope = monitor.PrivateLinkScope(
 )
 
 # Link the private linkscope to the log analytics workspace
-monitor.PrivateLinkScopedResource(
+workspace_private_link_connection = monitor.PrivateLinkScopedResource(
     "rse-log-analytics-ampls-connection",
     kind=monitor.ScopedResourceKind.RESOURCE,
     linked_resource_id=workspace_analytics.id,
@@ -137,7 +137,7 @@ monitor.PrivateLinkScopedResource(
 )
 
 # Link the private linkscope to the data collection endpoint
-monitor.PrivateLinkScopedResource(
+data_collection_endpoint_private_link_connection = monitor.PrivateLinkScopedResource(
     "rse-data-collection-endpoint-ampls-connection",
     kind=monitor.ScopedResourceKind.RESOURCE,
     linked_resource_id=data_collection_endpoint.id,

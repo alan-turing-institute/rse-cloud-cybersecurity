@@ -6,7 +6,13 @@ import unittest
 
 import pulumi
 
-from infra.compute import virtual_machine
+from infra.compute import (
+    azure_monitor_extension,
+    data_collection_endpoint_association,
+    data_collection_rule_association,
+    virtual_machine,
+)
+from infra.monitoring import data_collection_endpoint, data_collection_rule_vms
 
 
 class TestCompute(unittest.TestCase):
@@ -46,6 +52,52 @@ class TestCompute(unittest.TestCase):
         return virtual_machine.os_profile.apply(  # ty: ignore[missing-argument]
             check  # ty: ignore[invalid-argument-type]
         )
+
+    @pulumi.runtime.test
+    def test_virtual_machine_has_a_system_assigned_identity(self):
+        def check(identity) -> None:
+            self.assertEqual(identity.type, "SystemAssigned")
+
+        return virtual_machine.identity.apply(  # ty: ignore[missing-argument]
+            check  # ty: ignore[invalid-argument-type]
+        )
+
+    @pulumi.runtime.test
+    def test_virtual_machine_enables_boot_diagnostics(self):
+        def check(diagnostics_profile) -> None:
+            self.assertTrue(diagnostics_profile.boot_diagnostics.enabled)
+
+        return virtual_machine.diagnostics_profile.apply(  # ty: ignore[missing-argument]
+            check  # ty: ignore[invalid-argument-type]
+        )
+
+    @pulumi.runtime.test
+    def test_azure_monitor_extension_is_the_expected_agent(self):
+        def check(args: tuple) -> None:
+            publisher, extension_type = args
+            self.assertEqual(publisher, "Microsoft.Azure.Monitor")
+            self.assertEqual(extension_type, "AzureMonitorLinuxAgent")
+
+        return pulumi.Output.all(  # ty: ignore[missing-argument]
+            azure_monitor_extension.publisher,
+            azure_monitor_extension.type,
+        ).apply(check)  # ty: ignore[invalid-argument-type]
+
+    @pulumi.runtime.test
+    def test_virtual_machine_is_associated_with_the_data_collection_rule_and_endpoint(
+        self,
+    ):
+        def check(args: tuple) -> None:
+            dcr_association_id, dcr_id, dce_association_id, dce_id = args
+            self.assertEqual(dcr_association_id, dcr_id)
+            self.assertEqual(dce_association_id, dce_id)
+
+        return pulumi.Output.all(  # ty: ignore[missing-argument]
+            data_collection_rule_association.data_collection_rule_id,
+            data_collection_rule_vms.id,
+            data_collection_endpoint_association.data_collection_endpoint_id,
+            data_collection_endpoint.id,
+        ).apply(check)  # ty: ignore[invalid-argument-type]
 
     @pulumi.runtime.test
     def test_custom_data_provisions_the_graphical_desktop_and_rdp(self):
