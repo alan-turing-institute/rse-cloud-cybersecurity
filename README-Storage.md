@@ -82,15 +82,15 @@ https://learn.microsoft.com/en-us/azure/storage/common/storage-service-encryptio
 
 As explained above, the virtual machine can no longer use the VS Code Azure Storage extension once the Application Firewall is in place, since the extension's sign-in flow needs endpoints the firewall doesn't allow. Its own `virtual_network_rules` entry (see above) still lets it reach the storage account's data plane directly, though, so the Azure CLI works fine.
 
-The Azure CLI is pre-installed on the virtual machine via cloud-init (see `infra/templates/vm-cloud-init.yaml.j2`), so the only manual step is signing in once per session - **use the device code flow, not plain `az login`:**
+The Azure CLI is pre-installed on the virtual machine via cloud-init (see `infra/templates/vm-cloud-init.yaml.j2`). Rather than have an operator sign in as themselves (interactively, on every session, plus a manual RBAC role assignment that's easy to get wrong or forget), the VM authenticates as **its own system-assigned managed identity** (`infra/compute.py`'s `virtual_machine`), which `infra/storage.py`'s `vm_storage_blob_data_contributor` grants **Storage Blob Data Contributor** on the storage account, as part of this Pulumi program - not a manual step:
 
 ```sh
-az login --use-device-code
+az login --identity
 ```
 
-This prints a URL and a short code; open that URL and enter the code on *any other device* (your own laptop, phone, etc.) rather than on the VM itself. Plain `az login` (no flag) opens a browser on the VM and doesn't work here: it renders a mostly-blank page, because Microsoft's sign-in page loads its script bundle from CDN hosts (e.g. `aadcdn.msftauth.net`) that aren't on the Application Firewall's allow-list - and, like the VS Code Marketplace CDN gap already flagged in `README-Firewall.md`, that isn't a small, fixed, safely-enumerable set of hosts to chase. The device code flow sidesteps this entirely: the VM only ever makes plain token-protocol calls to `login.microsoftonline.com` (a REST API, not a rendered page) while the actual sign-in page is shown - and loads its assets - on the other device, off this firewall's network altogether. This is also [Microsoft's own recommended flow](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/install-cli-sdk) for exactly this kind of environment.
+This is the entire sign-in step - no browser, no device code, no separate account to keep track of. It works by querying the VM's own Instance Metadata Service (`http://169.254.169.254`, a special address that's always reachable regardless of the Application Firewall's `0.0.0.0/0` route or its allow-list - the same way the storage account's own DNS resolution and the platform DNS server bypass it), so it needs none of the `AllowAzureCli` firewall rule's endpoints (`login.microsoftonline.com` etc.) at all. That rule is still there and still useful - it's what makes plain `az login --use-device-code` work for a human operator signing in as *themselves* for other purposes - just not needed for this.
 
-The Application Firewall allows the endpoints the device code flow itself needs (`login.microsoftonline.com`, `login.windows.net`, `*.login.microsoft.com`, `management.azure.com`) via the `AllowAzureCli` rule - see `README-Firewall.md`. Once signed in, get the storage account's name - **`pulumi` isn't installed on the VM, so run this on the machine you deployed the stack from, not the VM itself:**
+Get the storage account's name - **`pulumi` isn't installed on the VM, so run this on the machine you deployed the stack from, not the VM itself:**
 
 ```sh
 pulumi stack output storage_account_name
@@ -112,14 +112,17 @@ az storage blob download \
   --name <blob-name> --file <local-path> --auth-mode login
 ```
 
-This is a natural fit for this repository: `az login` is already the only supported way to authenticate anywhere in this project (see `CLAUDE.md`), so the VM doesn't need any new *kind* of credential, and `--auth-mode login` avoids having to generate or rotate a SAS token by hand.
+`--auth-mode login` uses whichever identity is currently signed in - the managed identity here - rather than fetching an account key, so nothing above needs a SAS token or a key.
 
-The signed-in identity needs the **Storage Blob Data Contributor** role (or **Storage Blob Data Reader**, for download-only access) on the storage account or its resource group - the same role the main `README.md` already has you assign yourself for the Pulumi state container:
+If this still fails with `You do not have the required permissions to perform this operation`, check:
 
-```sh
-az role assignment create --role "Storage Blob Data Contributor" --assignee <email> \
-  --scope /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>
-```
+- **The role assignment hasn't propagated yet.** Azure RBAC changes can take several minutes to take effect after a fresh `pulumi up`; retry after a short wait.
+- **`az login --identity` actually succeeded and picked up the VM's identity**, not a stale cached login as some other account - `az account show --query user -o json` should show `"type": "servicePrincipal"`.
+- **You're looking at the right role assignment.** Confirm it exists with:
+  ```sh
+  az role assignment list --scope /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account> -o table
+  ```
+  It should show `Storage Blob Data Contributor` assigned to a principal of type `ServicePrincipal` - that's the VM's managed identity, not a user.
 
 ## Creating a Blob Storage SAS URL
 

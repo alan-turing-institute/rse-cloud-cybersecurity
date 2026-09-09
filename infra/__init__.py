@@ -33,6 +33,7 @@ from infra.storage import (
     storage_account_private_dns_zone_group,
     storage_account_private_endpoint,
     storage_subnet,
+    vm_storage_blob_data_contributor,
 )
 
 __all__ = [
@@ -60,5 +61,6 @@ __all__ = [
     "virtual_network",
     "workspace_analytics",
     "vm_admin_password",
+    "vm_storage_blob_data_contributor",
     "vm_subnet",
 ]

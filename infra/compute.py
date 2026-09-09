@@ -1,11 +1,14 @@
 """Linux virtual machine reachable over RDP with a graphical desktop.
 
 VS Code, with the mssql extension, is the way to reach the SQL database (see
-specs/01-the-scenario.md - no managed identity/RBAC yet). The Azure CLI is
-also installed (see below) and is the way to reach the storage account: its
-own VS Code extension (also installed, for completeness) no longer works
-once the Application Firewall and the storage account's own network rules
-are in place - see README-Storage.md.
+specs/01-the-scenario.md - no managed identity/RBAC for the database yet).
+The Azure CLI is also installed (see below) and is the way to reach the
+storage account, signed in as this VM's own system-assigned identity
+(`identity=` below) via `az login --identity` - its own VS Code extension
+(also installed, for completeness) no longer works once the Application
+Firewall and the storage account's own network rules are in place. See
+infra/storage.py's `vm_storage_blob_data_contributor` for the RBAC grant,
+and README-Storage.md for how this is used from the VM.
 
 Uses password authentication rather than an SSH key, in line with delaying
 security hardening to a later iteration.

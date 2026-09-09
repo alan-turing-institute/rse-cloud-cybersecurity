@@ -4,6 +4,7 @@ import unittest
 
 import pulumi
 
+from infra.compute import virtual_machine
 from infra.dns import dns_id
 from infra.firewall import firewall_management_subnet
 from infra.networking import vm_subnet
@@ -13,6 +14,7 @@ from infra.storage import (
     storage_account_private_dns_zone_group,
     storage_account_private_endpoint,
     storage_subnet,
+    vm_storage_blob_data_contributor,
 )
 
 
@@ -149,4 +151,31 @@ class TestStorage(unittest.TestCase):
         return pulumi.Output.all(  # ty: ignore[missing-argument]
             storage_account_private_dns_zone_group.private_dns_zone_configs,
             dns_id["blob"],
+        ).apply(check)  # ty: ignore[invalid-argument-type]
+
+    @pulumi.runtime.test
+    def test_vm_storage_role_assignment_grants_data_contributor_on_the_storage_account(
+        self,
+    ):
+        def check(args: tuple) -> None:
+            (
+                principal_id,
+                principal_type,
+                role_definition_id,
+                scope,
+                vm_principal_id,
+                storage_account_id,
+            ) = args
+            self.assertEqual(principal_id, vm_principal_id)
+            self.assertEqual(principal_type, "ServicePrincipal")
+            self.assertIn("ba92f5b4-2d11-453d-a403-e96b0029c9fe", role_definition_id)
+            self.assertEqual(scope, storage_account_id)
+
+        return pulumi.Output.all(  # ty: ignore[missing-argument]
+            vm_storage_blob_data_contributor.principal_id,
+            vm_storage_blob_data_contributor.principal_type,
+            vm_storage_blob_data_contributor.role_definition_id,
+            vm_storage_blob_data_contributor.scope,
+            virtual_machine.identity.principal_id,
+            storage_account.id,
         ).apply(check)  # ty: ignore[invalid-argument-type]
