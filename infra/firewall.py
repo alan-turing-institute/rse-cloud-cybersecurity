@@ -211,6 +211,8 @@ application_rule_collections = [
                 source_addresses=vm_subnet.address_prefixes,
                 target_fqdns=[
                     "login.microsoftonline.com",
+                    "login.windows.net",
+                    "*.login.microsoft.com",
                     "management.azure.com",
                 ],
             ),

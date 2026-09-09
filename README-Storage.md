@@ -74,13 +74,15 @@ https://learn.microsoft.com/en-us/azure/storage/common/storage-service-encryptio
 
 As explained above, the virtual machine can no longer use the VS Code Azure Storage extension once the Application Firewall is in place, since the extension's sign-in flow needs endpoints the firewall doesn't allow. Its own `virtual_network_rules` entry (see above) still lets it reach the storage account's data plane directly, though, so the Azure CLI works fine.
 
-The Azure CLI is pre-installed on the virtual machine via cloud-init (see `infra/templates/vm-cloud-init.yaml.j2`), so the only manual step is signing in once per session:
+The Azure CLI is pre-installed on the virtual machine via cloud-init (see `infra/templates/vm-cloud-init.yaml.j2`), so the only manual step is signing in once per session - **use the device code flow, not plain `az login`:**
 
 ```sh
-az login --use-device-code   # or plain `az login`, which opens Chrome (also pre-installed)
+az login --use-device-code
 ```
 
-The Application Firewall allows the two endpoints this needs (`login.microsoftonline.com`, `management.azure.com`) via the `AllowAzureCli` rule - see `README-Firewall.md`. Once signed in:
+This prints a URL and a short code; open that URL and enter the code on *any other device* (your own laptop, phone, etc.) rather than on the VM itself. Plain `az login` (no flag) opens a browser on the VM and doesn't work here: it renders a mostly-blank page, because Microsoft's sign-in page loads its script bundle from CDN hosts (e.g. `aadcdn.msftauth.net`) that aren't on the Application Firewall's allow-list - and, like the VS Code Marketplace CDN gap already flagged in `README-Firewall.md`, that isn't a small, fixed, safely-enumerable set of hosts to chase. The device code flow sidesteps this entirely: the VM only ever makes plain token-protocol calls to `login.microsoftonline.com` (a REST API, not a rendered page) while the actual sign-in page is shown - and loads its assets - on the other device, off this firewall's network altogether. This is also [Microsoft's own recommended flow](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/install-cli-sdk) for exactly this kind of environment.
+
+The Application Firewall allows the endpoints the device code flow itself needs (`login.microsoftonline.com`, `login.windows.net`, `*.login.microsoft.com`, `management.azure.com`) via the `AllowAzureCli` rule - see `README-Firewall.md`. Once signed in:
 
 ```sh
 STORAGE_ACCOUNT=$(pulumi stack output storage_account_name)

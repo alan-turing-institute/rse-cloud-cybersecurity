@@ -73,7 +73,12 @@ class TestFirewall(unittest.TestCase):
             )
             self.assertEqual(
                 fqdns_by_rule_name["AllowAzureCli"],
-                {"login.microsoftonline.com", "management.azure.com"},
+                {
+                    "login.microsoftonline.com",
+                    "login.windows.net",
+                    "*.login.microsoft.com",
+                    "management.azure.com",
+                },
             )
 
         return firewall.application_rule_collections.apply(  # ty: ignore[missing-argument]
