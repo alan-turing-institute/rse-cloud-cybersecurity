@@ -82,10 +82,16 @@ az login --use-device-code
 
 This prints a URL and a short code; open that URL and enter the code on *any other device* (your own laptop, phone, etc.) rather than on the VM itself. Plain `az login` (no flag) opens a browser on the VM and doesn't work here: it renders a mostly-blank page, because Microsoft's sign-in page loads its script bundle from CDN hosts (e.g. `aadcdn.msftauth.net`) that aren't on the Application Firewall's allow-list - and, like the VS Code Marketplace CDN gap already flagged in `README-Firewall.md`, that isn't a small, fixed, safely-enumerable set of hosts to chase. The device code flow sidesteps this entirely: the VM only ever makes plain token-protocol calls to `login.microsoftonline.com` (a REST API, not a rendered page) while the actual sign-in page is shown - and loads its assets - on the other device, off this firewall's network altogether. This is also [Microsoft's own recommended flow](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/install-cli-sdk) for exactly this kind of environment.
 
-The Application Firewall allows the endpoints the device code flow itself needs (`login.microsoftonline.com`, `login.windows.net`, `*.login.microsoft.com`, `management.azure.com`) via the `AllowAzureCli` rule - see `README-Firewall.md`. Once signed in:
+The Application Firewall allows the endpoints the device code flow itself needs (`login.microsoftonline.com`, `login.windows.net`, `*.login.microsoft.com`, `management.azure.com`) via the `AllowAzureCli` rule - see `README-Firewall.md`. Once signed in, get the storage account's name - **`pulumi` isn't installed on the VM, so run this on the machine you deployed the stack from, not the VM itself:**
 
 ```sh
-STORAGE_ACCOUNT=$(pulumi stack output storage_account_name)
+pulumi stack output storage_account_name
+```
+
+The name is random-suffixed (see `infra/naming.py`), so the VM can't guess it - copy the value across (e.g. paste it over the RDP session) and set it on the VM:
+
+```sh
+STORAGE_ACCOUNT=<paste-the-value-from-above>
 
 # Upload a file to the demo container
 az storage blob upload \
