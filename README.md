@@ -126,11 +126,11 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
   - `networking.py` — VNet, subnet, NIC, and route table for the virtual machine (no public IP — the VM is reachable via the Bastion host or, for the narrower demo path described in `README-Firewall.md`, via the firewall's NAT rule; see below)
   - `bastion_networking.py` — NSG, subnet, and public IP for the Azure Bastion host
   - `bastion.py` — the Azure Bastion host itself
-  - `storage.py` — the storage account and its blob container, restricted by a Storage Account firewall to the Turing VPN and, via a `Microsoft.Storage` service endpoint, the VM's own subnet (see `README-Storage.md` — this is why the VM uses `az storage` rather than the VS Code Azure Storage extension), plus at-rest encryption and a (currently unused) private endpoint for the blob service
+  - `storage.py` — the storage account and its blob container, restricted by a Storage Account firewall to the Turing VPN and, via a `Microsoft.Storage` service endpoint, the VM's own subnet (see `README-Storage.md` — this is why the VM uses `az storage` rather than the VS Code Azure Storage extension), plus at-rest encryption and a private endpoint for the blob service, resolved via the private DNS zone `dns.py` maintains
   - `database.py` — the Azure SQL Database logical server, firewall rule, and database (Basic tier — the cheapest managed RDBMS on Azure)
   - `compute.py` — the virtual machine
   - `monitoring.py` — the Log Analytics workspace, data collection endpoint/rule, and the private-link plumbing (subnet, private endpoint, AMPLS scope) needed to reach it without public network access
-  - `dns.py` — private DNS zones and VNet links so the VM can resolve the monitoring private endpoint
+  - `dns.py` — private DNS zones and VNet links so the VM can resolve the monitoring private endpoint (the "blob" zone here is also populated by `storage.py`'s own private endpoint - see `README-Storage.md`)
   - `alerts.py` — the action group and CPU/memory metric alerts built on top of the workspace
   - `firewall.py` — the Azure Firewall, its subnets/public IPs, the NAT rule that forwards SSH to the VM, the application rules restricting the VM's outbound access, and the route sending the VM subnet's traffic through the firewall
 - `tests/` — unit tests using Pulumi's mocking framework, one module per `infra` concern (`test_networking.py`, `test_bastion_networking.py`, `test_bastion.py`, `test_storage.py`, `test_database.py`, `test_compute.py`, `test_resource_group.py`, `test_monitoring.py`, `test_alerts.py`, `test_dns.py`, `test_firewall.py`), plus `conftest.py` which wires up the shared mocks and test config

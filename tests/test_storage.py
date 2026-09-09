@@ -4,11 +4,13 @@ import unittest
 
 import pulumi
 
+from infra.dns import dns_id
 from infra.firewall import firewall_management_subnet
 from infra.networking import vm_subnet
 from infra.storage import (
     blob_container,
     storage_account,
+    storage_account_private_dns_zone_group,
     storage_account_private_endpoint,
     storage_subnet,
 )
@@ -135,4 +137,16 @@ class TestStorage(unittest.TestCase):
 
         return pulumi.Output.all(  # ty: ignore[missing-argument]
             storage_account_private_endpoint.subnet.id, storage_subnet.id
+        ).apply(check)  # ty: ignore[invalid-argument-type]
+
+    @pulumi.runtime.test
+    def test_storage_account_private_dns_zone_group_populates_the_blob_zone(self):
+        def check(args: tuple) -> None:
+            configs, blob_zone_id = args
+            self.assertEqual(len(configs), 1)
+            self.assertEqual(configs[0]["private_dns_zone_id"], blob_zone_id)
+
+        return pulumi.Output.all(  # ty: ignore[missing-argument]
+            storage_account_private_dns_zone_group.private_dns_zone_configs,
+            dns_id["blob"],
         ).apply(check)  # ty: ignore[invalid-argument-type]

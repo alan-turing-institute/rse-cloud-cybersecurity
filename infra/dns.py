@@ -4,7 +4,11 @@ from infra.monitoring import log_analytics_private_endpoint
 from infra.networking import virtual_network
 from infra.resource_group import resource_group
 
-# The DNS zones needed for the monitoring endpoint
+# The DNS zones needed for the monitoring endpoint. "blob" is also reused by
+# infra/storage.py's own private endpoint (see storage_account_private_dns_zone_group
+# there) - a zone name is unique per resource group, so there's only ever one
+# of these to link to the VNet and populate with records, however many
+# private endpoints end up using it.
 dns_zones = {
     "monitor": "privatelink.monitor.azure.com",
     "oms": "privatelink.oms.opinsights.azure.com",

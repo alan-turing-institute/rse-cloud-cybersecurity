@@ -3,6 +3,7 @@
 import pulumi
 from pulumi_azure_native import network, storage
 
+from infra.dns import dns_id
 from infra.naming import suffix
 from infra.networking import network_security_group, virtual_network, vm_subnet
 from infra.resource_group import resource_group
@@ -95,4 +96,25 @@ storage_account_private_endpoint = network.PrivateEndpoint(
     opts=pulumi.ResourceOptions(
         parent=storage_account,
     ),
+)
+
+# Populate the "blob" private DNS zone (created and linked to the whole VNet
+# in infra/dns.py, for the Log Analytics private endpoint) with a record for
+# this private endpoint too. Without this, the zone is linked but empty: the
+# private endpoint's mere existence makes Azure rewrite the storage
+# account's public DNS entry to a CNAME into this zone, so any DNS query for
+# the storage account from inside the VNet (including the VM) gets shadowed
+# by the empty zone and fails to resolve, instead of falling back to the
+# account's public IP the way it would from outside the VNet.
+storage_account_private_dns_zone_group = network.PrivateDnsZoneGroup(
+    "rse-storage-account-private-dns-zone-group",
+    private_dns_zone_configs=[
+        network.PrivateDnsZoneConfigArgs(
+            name="rse-storage-to-blob",
+            private_dns_zone_id=dns_id["blob"],
+        )
+    ],
+    private_dns_zone_group_name="rse-dzg-storage",
+    private_endpoint_name=storage_account_private_endpoint.name,
+    resource_group_name=resource_group.name,
 )
