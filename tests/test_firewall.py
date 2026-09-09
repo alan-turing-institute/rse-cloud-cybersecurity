@@ -71,6 +71,10 @@ class TestFirewall(unittest.TestCase):
             self.assertIn(
                 "*.blob.core.windows.net", fqdns_by_rule_name["AllowAzureStorage"]
             )
+            self.assertEqual(
+                fqdns_by_rule_name["AllowAzureCli"],
+                {"login.microsoftonline.com", "management.azure.com"},
+            )
 
         return firewall.application_rule_collections.apply(  # ty: ignore[missing-argument]
             check  # ty: ignore[invalid-argument-type]

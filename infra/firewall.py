@@ -199,6 +199,21 @@ application_rule_collections = [
                     "*.blob.core.windows.net",
                 ],
             ),
+            network.AzureFirewallApplicationRuleArgs(
+                description="Allow Entra ID and ARM, needed for az login",
+                name="AllowAzureCli",
+                protocols=[
+                    network.AzureFirewallApplicationRuleProtocolArgs(
+                        port=443,
+                        protocol_type=network.AzureFirewallApplicationRuleProtocolType.HTTPS,
+                    ),
+                ],
+                source_addresses=vm_subnet.address_prefixes,
+                target_fqdns=[
+                    "login.microsoftonline.com",
+                    "management.azure.com",
+                ],
+            ),
         ],
     ),
     network.AzureFirewallApplicationRuleCollectionArgs(

@@ -72,7 +72,15 @@ https://learn.microsoft.com/en-us/azure/storage/common/storage-service-encryptio
 
 ## Accessing the storage account from the virtual machine
 
-As explained above, the virtual machine can no longer use the VS Code Azure Storage extension once the Application Firewall is in place, since the extension's sign-in flow needs endpoints the firewall doesn't allow. Its own `virtual_network_rules` entry (see above) still lets it reach the storage account's data plane directly, though, so the Azure CLI works fine:
+As explained above, the virtual machine can no longer use the VS Code Azure Storage extension once the Application Firewall is in place, since the extension's sign-in flow needs endpoints the firewall doesn't allow. Its own `virtual_network_rules` entry (see above) still lets it reach the storage account's data plane directly, though, so the Azure CLI works fine.
+
+The Azure CLI is pre-installed on the virtual machine via cloud-init (see `infra/templates/vm-cloud-init.yaml.j2`), so the only manual step is signing in once per session:
+
+```sh
+az login --use-device-code   # or plain `az login`, which opens Chrome (also pre-installed)
+```
+
+The Application Firewall allows the two endpoints this needs (`login.microsoftonline.com`, `management.azure.com`) via the `AllowAzureCli` rule - see `README-Firewall.md`. Once signed in:
 
 ```sh
 STORAGE_ACCOUNT=$(pulumi stack output storage_account_name)
@@ -88,7 +96,7 @@ az storage blob download \
   --name <blob-name> --file <local-path> --auth-mode login
 ```
 
-This is a natural fit for this repository: `az login` is already the only supported way to authenticate (see `CLAUDE.md`), so the VM doesn't need any new credentials or tooling, and `--auth-mode login` avoids having to generate or rotate a SAS token by hand.
+This is a natural fit for this repository: `az login` is already the only supported way to authenticate anywhere in this project (see `CLAUDE.md`), so the VM doesn't need any new *kind* of credential, and `--auth-mode login` avoids having to generate or rotate a SAS token by hand.
 
 The signed-in identity needs the **Storage Blob Data Contributor** role (or **Storage Blob Data Reader**, for download-only access) on the storage account or its resource group - the same role the main `README.md` already has you assign yourself for the Pulumi state container:
 

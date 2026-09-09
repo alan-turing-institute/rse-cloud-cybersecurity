@@ -1,7 +1,11 @@
-"""Linux virtual machine reachable over RDP with a graphical desktop, and VS
-Code pre-installed as the *only* way to reach the storage account and the
-SQL database (see specs/01-the-scenario.md - no Azure CLI/sqlcmd fallback,
-no managed identity/RBAC yet).
+"""Linux virtual machine reachable over RDP with a graphical desktop.
+
+VS Code, with the mssql extension, is the way to reach the SQL database (see
+specs/01-the-scenario.md - no managed identity/RBAC yet). The Azure CLI is
+also installed (see below) and is the way to reach the storage account: its
+own VS Code extension (also installed, for completeness) no longer works
+once the Application Firewall and the storage account's own network rules
+are in place - see README-Storage.md.
 
 Uses password authentication rather than an SSH key, in line with delaying
 security hardening to a later iteration.
