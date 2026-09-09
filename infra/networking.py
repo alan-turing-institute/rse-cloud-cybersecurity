@@ -68,6 +68,11 @@ vm_subnet = network.Subnet(
         id=network_security_group.id
     ),
     route_table=network.RouteTableArgs(id=route_table.id),
+    service_endpoints=[
+        network.ServiceEndpointPropertiesFormatArgs(
+            service="Microsoft.Storage",
+        )
+    ],
 )
 
 network_interface = network.NetworkInterface(

@@ -59,6 +59,8 @@ In a more secure setup, these would be directed to package mirrors hosted inside
 7. Allow `*.database.windows.net` on port 1433 (MSSQL) - the Azure SQL Database public endpoint.
 8. Allow `*.blob.core.windows.net` on port 443 (HTTPS) - the Storage Account public endpoint.
 
+**Consolidation note (storage):** once `05-storage` lands (see `README-Storage.md`), the virtual machine's own subnet gets a `Microsoft.Storage` service endpoint, so its storage traffic takes a more specific route than this firewall's `0.0.0.0/0` UDR and reaches the Storage Account directly over the Azure backbone. Rule 8 above no longer sees any real VM traffic as a result - it's left in place as harmless defence in depth, in case the service endpoint is ever removed.
+
 One known gap: the VS Code Marketplace extension installs the cloud-init script also runs (`ms-mssql.mssql`, `ms-azuretools.vscode-azurestorage`) reach additional Microsoft CDN endpoints not enumerated here (e.g. `marketplace.visualstudio.com`, `*.gallerycdn.vsassets.io`) - these weren't added because that endpoint set isn't officially pinned down and can change; if `pulumi up` shows cloud-init failing on the extension install steps specifically, check the VM's `/var/log/cloud-init-output.log` for the blocked host and add it here.
 
 We also define one Deny rule:

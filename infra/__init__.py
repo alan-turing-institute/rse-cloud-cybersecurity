@@ -27,7 +27,12 @@ from infra.networking import (
     vm_subnet,
 )
 from infra.resource_group import resource_group
-from infra.storage import blob_container, storage_account
+from infra.storage import (
+    blob_container,
+    storage_account,
+    storage_account_private_endpoint,
+    storage_subnet,
+)
 
 __all__ = [
     "admin_username",
@@ -47,6 +52,8 @@ __all__ = [
     "sql_firewall_rule",
     "sql_server",
     "storage_account",
+    "storage_account_private_endpoint",
+    "storage_subnet",
     "virtual_machine",
     "virtual_network",
     "workspace_analytics",

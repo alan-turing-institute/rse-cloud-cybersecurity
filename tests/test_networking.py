@@ -65,6 +65,16 @@ class TestNetworking(unittest.TestCase):
         ).apply(check)  # ty: ignore[invalid-argument-type]
 
     @pulumi.runtime.test
+    def test_vm_subnet_has_the_microsoft_storage_service_endpoint(self):
+        def check(service_endpoints: list) -> None:
+            self.assertEqual(len(service_endpoints), 1)
+            self.assertEqual(service_endpoints[0]["service"], "Microsoft.Storage")
+
+        return vm_subnet.service_endpoints.apply(  # ty: ignore[missing-argument]
+            check  # ty: ignore[invalid-argument-type]
+        )
+
+    @pulumi.runtime.test
     def test_vm_has_no_public_ip(self):
         def check(ip_configurations: list) -> None:
             for ip_configuration in ip_configurations:
