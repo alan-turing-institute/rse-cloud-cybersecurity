@@ -4,6 +4,8 @@ A repository for the "Cloud Cybersecurity for Research Engineers​" presentatio
 
 This repository contains a [Pulumi](https://www.pulumi.com/) program, written in Python, that deploys Azure infrastructure. See [`CLAUDE.md`](CLAUDE.md) for the full technology stack and the coding guidelines followed when changing it.
 
+![Azure deployment architecture](img/architecture.svg)
+
 ## Prerequisites
 
 - [Python](https://www.python.org/) 3.11 or later
