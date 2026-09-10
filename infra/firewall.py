@@ -172,20 +172,6 @@ application_rule_collections = [
                 ],
             ),
             network.AzureFirewallApplicationRuleArgs(
-                description="Allow the Azure SQL Database public endpoint",
-                name="AllowAzureSql",
-                protocols=[
-                    network.AzureFirewallApplicationRuleProtocolArgs(
-                        port=1433,
-                        protocol_type=network.AzureFirewallApplicationRuleProtocolType.MSSQL,
-                    ),
-                ],
-                source_addresses=vm_subnet.address_prefixes,
-                target_fqdns=[
-                    "*.database.windows.net",
-                ],
-            ),
-            network.AzureFirewallApplicationRuleArgs(
                 description="Allow the Azure Storage public blob endpoint",
                 name="AllowAzureStorage",
                 protocols=[

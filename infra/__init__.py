@@ -14,13 +14,6 @@ from infra.compute import (
     virtual_machine,
     vm_admin_password,
 )
-from infra.database import (
-    admin_username,
-    db_admin_password,
-    sql_database,
-    sql_firewall_rule,
-    sql_server,
-)
 from infra.dns import monitoring_dns_zone
 from infra.firewall import firewall, firewall_public_ip
 from infra.monitoring import workspace_analytics
@@ -40,12 +33,10 @@ from infra.storage import (
 )
 
 __all__ = [
-    "admin_username",
     "bastion_host",
     "bastion_public_ip",
     "blob_container",
     "cpu_alert",
-    "db_admin_password",
     "firewall",
     "firewall_public_ip",
     "mem_alert",
@@ -53,9 +44,6 @@ __all__ = [
     "network_interface",
     "network_security_group",
     "resource_group",
-    "sql_database",
-    "sql_firewall_rule",
-    "sql_server",
     "storage_account",
     "storage_account_private_dns_zone_group",
     "storage_account_private_endpoint",

@@ -67,7 +67,6 @@ class TestFirewall(unittest.TestCase):
                 "packages.microsoft.com", fqdns_by_rule_name["AllowVsCodeRepo"]
             )
             self.assertIn("dl.google.com", fqdns_by_rule_name["AllowChromeRepo"])
-            self.assertIn("*.database.windows.net", fqdns_by_rule_name["AllowAzureSql"])
             self.assertIn(
                 "*.blob.core.windows.net", fqdns_by_rule_name["AllowAzureStorage"]
             )

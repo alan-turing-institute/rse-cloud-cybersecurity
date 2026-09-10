@@ -1,7 +1,5 @@
 """Linux virtual machine reachable over RDP with a graphical desktop.
 
-VS Code, with the mssql extension, is the way to reach the SQL database (see
-specs/01-the-scenario.md - no managed identity/RBAC for the database yet).
 The VM's system-assigned managed identity (`identity=` below) is granted
 read-only access to rse-demo-container only (see
 `storage_blob_data_reader_role_assignment` below, and
@@ -13,16 +11,9 @@ read-only grant, `az storage blob download --auth-mode login` works but
 
 Uses password authentication rather than an SSH key, in line with delaying
 security hardening to a later iteration.
-
-The mssql connection profile is pre-created (server/database/username), but
-- per the extension's own documented behaviour - the password isn't
-something that can be pre-seeded into settings.json; it's entered once on
-first connect and then remembered via VS Code's secret storage
-(savePassword=true).
 """
 
 import base64
-import json
 from pathlib import Path
 
 import jinja2
@@ -31,14 +22,11 @@ import pulumi_random
 from pulumi import ResourceOptions
 from pulumi_azure_native import authorization, compute, monitor
 
-from infra.database import admin_username as db_admin_username
-from infra.database import sql_database, sql_server
 from infra.monitoring import data_collection_endpoint, data_collection_rule_vms
 from infra.networking import network_interface
 from infra.resource_group import resource_group
 from infra.storage import blob_container, storage_account
 
-_MSSQL_PROFILE_NAME = "rse-demo-db"
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _CLOUD_INIT_TEMPLATE_PATH = _TEMPLATES_DIR / "vm-cloud-init.yaml.j2"
 _BLOBFUSE2_CONFIG_TEMPLATE_PATH = _TEMPLATES_DIR / "blobfuse2-config.yaml.j2"
@@ -69,30 +57,7 @@ _blobfuse2_config_template = jinja2.Template(
 _blobfuse2_unit_template = jinja2.Template(_BLOBFUSE2_UNIT_TEMPLATE_PATH.read_text())
 
 
-def _vscode_settings_json(sql_server_fqdn: str, database_name: str) -> str:
-    return json.dumps(
-        {
-            "mssql.connections": [
-                {
-                    "profileName": _MSSQL_PROFILE_NAME,
-                    "server": sql_server_fqdn,
-                    "database": database_name,
-                    "authenticationType": "SqlLogin",
-                    "user": db_admin_username,
-                    "password": "",
-                    "savePassword": True,
-                    "encrypt": "Mandatory",
-                }
-            ]
-        }
-    )
-
-
-def _custom_data(
-    sql_server_fqdn: str, database_name: str, storage_account_name: str
-) -> str:
-    vscode_settings_json = _vscode_settings_json(sql_server_fqdn, database_name)
-    vscode_settings_b64 = base64.b64encode(vscode_settings_json.encode()).decode()
+def _custom_data(storage_account_name: str) -> str:
     blobfuse2_config_yaml = _blobfuse2_config_template.render(
         storage_account_name=storage_account_name
     )
@@ -103,7 +68,6 @@ def _custom_data(
     blobfuse2_unit_b64 = base64.b64encode(blobfuse2_unit.encode()).decode()
     cloud_init = _cloud_init_template.render(
         admin_username=admin_username,
-        vscode_settings_b64=vscode_settings_b64,
         blobfuse2_config_b64=blobfuse2_config_b64,
         blobfuse2_unit_b64=blobfuse2_unit_b64,
         blobfuse2_config_path=_BLOBFUSE2_CONFIG_PATH,
@@ -113,9 +77,9 @@ def _custom_data(
     return base64.b64encode(cloud_init.encode()).decode()
 
 
-custom_data = pulumi.Output.all(  # ty: ignore[missing-argument]
-    sql_server.fully_qualified_domain_name, sql_database.name, storage_account.name
-).apply(lambda args: _custom_data(*args))  # ty: ignore[invalid-argument-type]
+custom_data = storage_account.name.apply(  # ty: ignore[missing-argument]
+    _custom_data  # ty: ignore[invalid-argument-type]
+)
 
 virtual_machine = compute.VirtualMachine(
     "rse-vm",

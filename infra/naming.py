@@ -1,6 +1,5 @@
-"""Shared random suffix for globally-unique Azure resource names (storage
-accounts and SQL logical servers are both named in a global, not per-account,
-namespace).
+"""Shared random suffix for the storage account's globally-unique name (storage
+accounts are named in a global, not per-account, namespace).
 """
 
 import pulumi_random

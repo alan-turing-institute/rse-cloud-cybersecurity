@@ -1,7 +1,6 @@
 """Tests for infra.compute using Pulumi's mocking framework."""
 
 import base64
-import json
 import unittest
 
 import pulumi
@@ -116,7 +115,6 @@ class TestCompute(unittest.TestCase):
         def check(os_profile) -> None:
             cloud_init = base64.b64decode(os_profile.custom_data).decode()
             self.assertIn("apt-get install -y code", cloud_init)
-            self.assertIn("ms-mssql.mssql", cloud_init)
             self.assertIn("ms-azuretools.vscode-azurestorage", cloud_init)
 
         return virtual_machine.os_profile.apply(  # ty: ignore[missing-argument]
@@ -191,29 +189,6 @@ class TestCompute(unittest.TestCase):
             # the unit inactive rather than tracking the actual mount.
             self.assertIn("--foreground=true", blobfuse2_unit)
             self.assertIn("Restart=on-failure", blobfuse2_unit)
-
-        return virtual_machine.os_profile.apply(  # ty: ignore[missing-argument]
-            check  # ty: ignore[invalid-argument-type]
-        )
-
-    @pulumi.runtime.test
-    def test_custom_data_pre_creates_the_mssql_connection_profile(self):
-        def check(os_profile) -> None:
-            cloud_init = base64.b64decode(os_profile.custom_data).decode()
-            settings_line = next(
-                line for line in cloud_init.splitlines() if "settings.json" in line
-            )
-            encoded_settings = settings_line.split("echo '")[1].split("'")[0]
-            settings = json.loads(base64.b64decode(encoded_settings))
-            connections = settings["mssql.connections"]
-            self.assertEqual(len(connections), 1)
-            connection = connections[0]
-            self.assertEqual(connection["authenticationType"], "SqlLogin")
-            self.assertEqual(connection["user"], "sqladmin")
-            # The extension only supports entering the password once and
-            # remembering it via savePassword - it can't be pre-seeded.
-            self.assertEqual(connection["password"], "")
-            self.assertTrue(connection["savePassword"])
 
         return virtual_machine.os_profile.apply(  # ty: ignore[missing-argument]
             check  # ty: ignore[invalid-argument-type]

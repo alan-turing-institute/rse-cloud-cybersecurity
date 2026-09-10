@@ -219,7 +219,7 @@ Extending the existing `pulumi.runtime.set_mocks`-based suite (mirroring the mod
 
 Per [`01-the-scenario.md`'s planned follow-up](01-the-scenario.md#planned-follow-up-later-iteration-not-part-of-this-scenario), this iteration is identity/RBAC only. Still deferred to later iterations:
 
-- Database access via managed identity, VNet-integrated / private database access (service endpoints or private link), and removing the `0.0.0.0`–`255.255.255.255` SQL firewall rule — planned as a separate iteration.
+- Database access via managed identity, VNet-integrated / private database access (service endpoints or private link), and removing the `0.0.0.0`–`255.255.255.255` SQL firewall rule — planned as a separate iteration. **Update:** the Azure SQL Database has since been removed from this branch entirely, making this moot — see [`specs/remove-sql-database.md`](remove-sql-database.md).
 - Narrowing the NSG's SSH/RDP rules to a trusted IP range instead of `Internet`/`0.0.0.0/0`.
 - SSH key authentication on the VM instead of password auth (VM login is unrelated to the resource-access identity work here).
 - Azure Bastion or another jump-host pattern instead of a directly internet-facing VM.
