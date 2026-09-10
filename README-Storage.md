@@ -80,15 +80,27 @@ https://learn.microsoft.com/en-us/azure/storage/common/storage-service-encryptio
 
 ## Accessing the storage account from the virtual machine
 
-As explained above, the virtual machine can no longer use the VS Code Azure Storage extension once the Application Firewall is in place, since the extension's sign-in flow needs endpoints the firewall doesn't allow. Its own `virtual_network_rules` entry (see above) still lets it reach the storage account's data plane directly, though, so the Azure CLI works fine.
+As explained above, the virtual machine can no longer use the VS Code Azure Storage extension once the Application Firewall is in place, since the extension's sign-in flow needs endpoints the firewall doesn't allow. Its own `virtual_network_rules` entry (see above) still lets it reach the storage account's data plane directly, though.
 
-The Azure CLI is pre-installed on the virtual machine via cloud-init (see `infra/templates/vm-cloud-init.yaml.j2`). Rather than have an operator sign in as themselves (interactively, on every session, plus a manual RBAC role assignment that's easy to get wrong or forget), the VM authenticates as **its own system-assigned managed identity** (`infra/compute.py`'s `virtual_machine`), which `infra/storage.py`'s `vm_storage_blob_data_contributor` grants **Storage Blob Data Contributor** on the storage account, as part of this Pulumi program - not a manual step:
+The VM authenticates as **its own system-assigned managed identity** (`infra/compute.py`'s `virtual_machine`), which `infra/compute.py`'s `storage_blob_data_reader_role_assignment` grants **Storage Blob Data Reader** - **read-only**, and scoped to the `rse-demo-container` blob container specifically, not the whole storage account - as part of this Pulumi program, not a manual step. See [`specs/02-managing-identity-storage.md`](specs/02-managing-identity-storage.md) for the full design, including why the grant is read-only and container-scoped rather than broader.
+
+### Reading the container: the BlobFuse2 mount (primary path)
+
+`rse-demo-container` is mounted directly on the VM's own filesystem at `/mnt/rse-demo-container` via [BlobFuse2](https://github.com/Azure/azure-storage-fuse), authenticating with the managed identity (`mode: msi` in its config - see `infra/templates/blobfuse2-config.yaml.j2`). This is the primary, no-sign-in way to browse the container from the VM: open `/mnt/rse-demo-container` in VS Code, a terminal, or a file manager, exactly like any other local directory. The mount is read-only (`--read-only=true`, `infra/templates/blobfuse2.service.j2`), matching the identity's own read-only grant.
+
+`mode: msi` reaches the VM's own Instance Metadata Service (`http://169.254.169.254`), the same endpoint `az login --identity` below uses - it's exempt from the Application Firewall's `0.0.0.0/0` route the same way the platform DNS server is, so **no Application Firewall rule is needed for the mount to authenticate**.
+
+See [`specs/02-managing-identity-storage.md`](specs/02-managing-identity-storage.md#verifying-the-mount-manual) for the full manual verification procedure (confirming the service is active, the mount is browsable, and both the mount and the underlying RBAC grant actually refuse writes and cross-container reads).
+
+### Accessing the container via the Azure CLI: read-only
+
+The Azure CLI is also pre-installed on the virtual machine via cloud-init (see `infra/templates/vm-cloud-init.yaml.j2`), and can sign in as the same managed identity, with no browser, no device code, and no separate account to keep track of:
 
 ```sh
 az login --identity
 ```
 
-This is the entire sign-in step - no browser, no device code, no separate account to keep track of. It works by querying the VM's own Instance Metadata Service (`http://169.254.169.254`, a special address that's always reachable regardless of the Application Firewall's `0.0.0.0/0` route or its allow-list - the same way the storage account's own DNS resolution and the platform DNS server bypass it), so it needs none of the `AllowAzureCli` firewall rule's endpoints (`login.microsoftonline.com` etc.) at all. That rule is still there and still useful - it's what makes plain `az login --use-device-code` work for a human operator signing in as *themselves* for other purposes - just not needed for this.
+Like the mount, this goes through the VM's own IMDS endpoint, so it needs none of the `AllowAzureCli` firewall rule's endpoints (`login.microsoftonline.com` etc.) at all. That rule is still there and still useful - it's what makes plain `az login --use-device-code` work for a human operator signing in as *themselves* for other purposes - just not needed for this.
 
 Get the storage account's name - **`pulumi` isn't installed on the VM, so run this on the machine you deployed the stack from, not the VM itself:**
 
@@ -101,28 +113,25 @@ The name is random-suffixed (see `infra/naming.py`), so the VM can't guess it - 
 ```sh
 STORAGE_ACCOUNT=<paste-the-value-from-above>
 
-# Upload a file to the demo container
-az storage blob upload \
-  --account-name "$STORAGE_ACCOUNT" --container-name "rse-demo-container" \
-  --name <blob-name> --file <local-path> --auth-mode login
-
-# Download a file from the demo container
+# Download a file from the demo container - this works: the identity has read access
 az storage blob download \
   --account-name "$STORAGE_ACCOUNT" --container-name "rse-demo-container" \
   --name <blob-name> --file <local-path> --auth-mode login
 ```
 
-`--auth-mode login` uses whichever identity is currently signed in - the managed identity here - rather than fetching an account key, so nothing above needs a SAS token or a key.
+`--auth-mode login` uses whichever identity is currently signed in - the managed identity here - rather than fetching an account key, so this needs no SAS token or a key.
 
-If this still fails with `You do not have the required permissions to perform this operation`, check:
+**Uploading from the VM no longer works.** `az storage blob upload --auth-mode login` fails with an authorization error (`AuthorizationPermissionMismatch`/`403`) - the identity's grant is Storage Blob Data **Reader**, not Contributor, and that's deliberate: see [`specs/02-managing-identity-storage.md`](specs/02-managing-identity-storage.md) and [`specs/consolidating-managing-identities.md`](specs/consolidating-managing-identities.md) for why least-privilege, read-only access for the VM's own identity took priority over keeping this write path alive. If you need to add data to the container, do it from a device on the Turing VPN via the SAS workflow below (or via the retained account key/Portal), not from the VM.
+
+If the download above fails with `You do not have the required permissions to perform this operation`, check:
 
 - **The role assignment hasn't propagated yet.** Azure RBAC changes can take several minutes to take effect after a fresh `pulumi up`; retry after a short wait.
 - **`az login --identity` actually succeeded and picked up the VM's identity**, not a stale cached login as some other account - `az account show --query user -o json` should show `"type": "servicePrincipal"`.
 - **You're looking at the right role assignment.** Confirm it exists with:
   ```sh
-  az role assignment list --scope /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account> -o table
+  az role assignment list --scope /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/rse-demo-container -o table
   ```
-  It should show `Storage Blob Data Contributor` assigned to a principal of type `ServicePrincipal` - that's the VM's managed identity, not a user.
+  It should show `Storage Blob Data Reader` assigned to a principal of type `ServicePrincipal` - that's the VM's managed identity, not a user.
 
 ## Creating a Blob Storage SAS URL
 

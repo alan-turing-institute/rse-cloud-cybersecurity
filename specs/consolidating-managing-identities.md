@@ -1,8 +1,10 @@
 # Consolidating Managing Identities — PR #8
 
-Plan to bring [PR #8 "Access the storage container via managed identity (BlobFuse2 mount)"](https://github.com/alan-turing-institute/rse-cloud-cybersecurity/pull/8) (branch `01-managing-identity`) into `consolidation`, so the resulting branch still passes the project's verification gate (`ruff check`, `ruff format --check`, `ty check`, `pytest` — see [`CLAUDE.md`](../CLAUDE.md)), without breaking the Bastion, Log Analytics, Application Firewall, and Storage Firewall work already on `consolidation` ([`consolidating-bastion.md`](consolidating-bastion.md), [`consolidating-logs.md`](consolidating-logs.md), [`consolidating-firewall.md`](consolidating-firewall.md), [`consolidating-storage-firewall.md`](consolidating-storage-firewall.md)).
+Plan to bring [PR #8 "Access the storage container via managed identity (BlobFuse2 mount)"](https://github.com/alan-turing-institute/rse-cloud-cybersecurity/pull/8) (branch `01-managing-identity`) into `consolidation`, so the resulting branch still passes the project's verification gate (`ruff check`, `ruff format --check`, `ty check`, `pytest` — see [`CLAUDE.md`](../CLAUDE.md)), without breaking the Bastion, Log Analytics, and Application Firewall work already on `consolidation` ([`consolidating-bastion.md`](consolidating-bastion.md), [`consolidating-logs.md`](consolidating-logs.md), [`consolidating-firewall.md`](consolidating-firewall.md), [`consolidating-storage-firewall.md`](consolidating-storage-firewall.md)).
 
-**Unlike PR #9's storage-firewall consolidation, the textual merge itself is not clean.** `git merge-tree` reports real conflict markers in `infra/__init__.py` and `infra/compute.py` — and, more importantly, a plain merge of both sides' code would produce a genuine Python circular import (`infra/storage.py` → `infra/compute.py` → `infra/storage.py`), because `consolidating-storage-firewall.md`'s own follow-up work independently added a managed-identity RBAC grant for VM storage access, in the *opposite* direction PR #8 assumed when it was designed. On top of that, both branches now grant the VM's identity overlapping access to the same blob container via two different role assignments — one already on `consolidation`, one added by PR #8 — which would silently defeat PR #8's whole "read-only, single-container, least-privilege" design goal if both landed unexamined. See "The compatibility problems" below before anything else.
+**Unlike PR #9's storage-firewall consolidation, the textual merge itself is not clean.** `git merge-tree` reports real conflict markers in `infra/__init__.py` and `infra/compute.py` — because `consolidating-storage-firewall.md`'s own follow-up work independently added a managed-identity RBAC grant for VM storage access, in the *opposite* import direction PR #8 assumed when it was designed. A plain merge of both sides' code as-is would produce a genuine Python circular import (`infra/storage.py` → `infra/compute.py` → `infra/storage.py`).
+
+**On the RBAC design itself, this plan makes a deliberate choice, per explicit direction: keep PR #8's role assignment exactly as designed** — Storage Blob Data **Reader**, scoped to the `rse-demo-container` blob container only, no write access. `consolidation`'s existing grant (Storage Blob Data **Contributor**, scoped to the *whole storage account*, added by the storage-firewall consolidation's own follow-up so `az storage blob upload/download --auth-mode login` would work from the VM) is **removed outright**, not merged or narrowed. The accepted consequence is that the VM's `az storage blob upload --auth-mode login` workflow, documented in `README-Storage.md`, **stops working** — this is intentional, not a gap to fix. See "The compatibility problems" below before anything else.
 
 ## Starting point
 
@@ -11,21 +13,21 @@ Plan to bring [PR #8 "Access the storage container via managed identity (BlobFus
   - `06d3c8a` — switches that `az login` guidance to `--use-device-code` (plain `az login`'s sign-in page rendered blank behind the firewall).
   - `a13b424` — fixes `README-Storage.md`'s guidance to not run `pulumi stack output` on the VM (Pulumi isn't installed there).
   - `dde1215` — populates the shared "blob" private DNS zone with the storage endpoint's own record (without it, the VM couldn't resolve the storage account's name at all).
-  - `22fb7e8` — **replaces that device-code human login with the VM's own system-assigned managed identity**: adds `identity=compute.VirtualMachineIdentityArgs(type=SYSTEM_ASSIGNED)` to `virtual_machine` (`infra/compute.py`), and a new `authorization.RoleAssignment` (`vm_storage_blob_data_contributor`, in `infra/storage.py`) granting that identity **Storage Blob Data Contributor** on the **whole storage account**, so `az login --identity` + `az storage blob upload/download --auth-mode login` works with no manual RBAC step and no interactive sign-in.
-- `01-managing-identity` (`250fc46`) branches from `f4987d8` — the same pre-Bastion/Log-Analytics/Firewall/Storage base the other four sibling branches diverged from. It predates all of the above; its own design doc (`specs/02-managing-identity-storage.md`, brought in by this PR) was written and verified against a VM with no managed identity, no Application Firewall, and no storage-account network ACL yet.
+  - `22fb7e8` — **replaces that device-code human login with the VM's own system-assigned managed identity**: adds `identity=compute.VirtualMachineIdentityArgs(type=SYSTEM_ASSIGNED)` to `virtual_machine` (`infra/compute.py`), and a new `authorization.RoleAssignment` (`vm_storage_blob_data_contributor`, in `infra/storage.py`) granting that identity **Storage Blob Data Contributor** on the **whole storage account**, so `az login --identity` + `az storage blob upload/download --auth-mode login` works with no manual RBAC step and no interactive sign-in. **This grant is removed by this plan** — see below.
+- `01-managing-identity` (`250fc46`) branches from `f4987d8` — the same pre-Bastion/Log-Analytics/Firewall/Storage base the other four sibling branches diverged from. It predates all of the above; its own design doc (`specs/02-managing-identity-storage.md`, brought in by this PR) was written and verified against a VM with no managed identity, no Application Firewall, and no storage-account network ACL yet — but its RBAC design (Reader, container-scoped) is exactly what this plan keeps.
 - `git merge-tree $(git merge-base consolidation origin/01-managing-identity) consolidation origin/01-managing-identity` shows **conflict markers** in `infra/__init__.py` (the re-export list) and `infra/compute.py` (the module docstring, the `pulumi_azure_native` import line, and the block right after `virtual_machine` is created). `infra/templates/vm-cloud-init.yaml.j2` merges cleanly (both sides only append, at different points in the file). `infra/templates/blobfuse2-config.yaml.j2`, `infra/templates/blobfuse2.service.j2`, and `specs/02-managing-identity-storage.md` are added cleanly (untouched by anything else on `consolidation`).
 
 ## What PR #8 changes
 
-- Adds a system-assigned managed identity to `virtual_machine` (`infra/compute.py`) — `identity=compute.VirtualMachineIdentityArgs(type=compute.ResourceIdentityType.SYSTEM_ASSIGNED)`.
-- Adds `storage_blob_data_reader_role_assignment`, an `authorization.RoleAssignment` granting that identity **Storage Blob Data Reader** (read-only), scoped to `blob_container.id` (the `rse-demo-container` container specifically, not the whole storage account). Deliberately placed in `infra/compute.py`, not `infra/storage.py` — PR #8's own reasoning (see `specs/02-managing-identity-storage.md`'s "Changes by resource") is that `infra/compute.py` needs to import `storage_account`/`blob_container` from `infra/storage.py` for the BlobFuse2 config below, so `infra/storage.py` importing `virtual_machine` back "would be a genuine Python circular import, not just a style question."
+- Adds a system-assigned managed identity to `virtual_machine` (`infra/compute.py`) — `identity=compute.VirtualMachineIdentityArgs(type=compute.ResourceIdentityType.SYSTEM_ASSIGNED)`. (`consolidation` already added the identical block, independently — no actual change needed here, just no duplication.)
+- Adds `storage_blob_data_reader_role_assignment`, an `authorization.RoleAssignment` granting that identity **Storage Blob Data Reader** (read-only), scoped to `blob_container.id` (the `rse-demo-container` container specifically, not the whole storage account). Deliberately placed in `infra/compute.py`, not `infra/storage.py` — PR #8's own reasoning (see `specs/02-managing-identity-storage.md`'s "Changes by resource") is that `infra/compute.py` needs to import `storage_account`/`blob_container` from `infra/storage.py` for the BlobFuse2 config below, so `infra/storage.py` importing `virtual_machine` back "would be a genuine Python circular import, not just a style question." **This plan keeps this role assignment exactly as PR #8 wrote it** — see "The compatibility problems" #2.
 - Mounts `rse-demo-container` directly on the VM's filesystem at `/mnt/rse-demo-container` via **BlobFuse2**, authenticating with `mode: msi` (the managed identity, via the VM's local IMDS endpoint) — no account key, SAS, or other credential anywhere in the config:
   - New cloud-init steps in `infra/templates/vm-cloud-init.yaml.j2`: install `fuse3`/`blobfuse2` from `packages.microsoft.com` (via `packages-microsoft-prod.deb`, Microsoft's generic installer for that feed), enable `user_allow_other` in `/etc/fuse.conf`, create the mount point/config/cache directories, write the rendered config and systemd unit, `daemon-reload` + `enable --now` the unit.
   - New template `infra/templates/blobfuse2-config.yaml.j2` (`type: block`, `disable-kernel-cache: true`, `attr_cache.timeout-sec: 0` — needed because the account's retained key lets blobs be added outside BlobFuse2 entirely, per the template's own comment).
   - New template `infra/templates/blobfuse2.service.j2` (`Type=simple` with `--foreground=true` — required, or the daemonizing `blobfuse2 mount` process exits and systemd reports `inactive`; `--read-only=true`; `Restart=on-failure`/`RestartSec=15`, absorbing RBAC-propagation delay on first boot).
   - `infra/compute.py`'s `_custom_data`/`custom_data` grow a third input, `storage_account.name`, to render the BlobFuse2 config.
-- Adds `specs/02-managing-identity-storage.md`: a detailed design doc (goals, design principles, a manual verification procedure using `systemctl`/`ls`/`touch`, and a `curl`+IMDS-token troubleshooting procedure that deliberately checks for `403 Forbidden` on write attempts and on other containers, to prove the Reader role and container scope are both actually enforced).
-- Extends `tests/test_compute.py` (VM has a `SystemAssigned` identity; the rendered `custom_data` contains the BlobFuse2 install/config/unit content and no credential; the role assignment is scoped to `blob_container.id` with the Reader role ID and `ServicePrincipal` principal type) and `tests/conftest.py` (mocks the `azure-native:authorization:getClientConfig` call PR #8's `role_definition_id` construction uses).
+- Adds `specs/02-managing-identity-storage.md`: a detailed design doc (goals, design principles, a manual verification procedure using `systemctl`/`ls`/`touch`, and a `curl`+IMDS-token troubleshooting procedure that deliberately checks for `403 Forbidden` on write attempts and on other containers, to prove the Reader role and container scope are both actually enforced) — this procedure needs **no correction** under this plan, since the Reader/container-scope design it verifies is kept unchanged.
+- Extends `tests/test_compute.py` (VM has a `SystemAssigned` identity; the rendered `custom_data` contains the BlobFuse2 install/config/unit content and no credential; the role assignment is scoped to `blob_container.id` with the Reader role ID and `ServicePrincipal` principal type) and `tests/conftest.py` (mocks the `azure-native:authorization:getClientConfig` call PR #8's `role_definition_id` construction uses) — both brought in as-is.
 
 ## The compatibility problems
 
@@ -33,22 +35,22 @@ Plan to bring [PR #8 "Access the storage container via managed identity (BlobFus
 
 `consolidation`'s `22fb7e8` already added a VM-identity-to-storage RBAC grant — independently, for a different reason (the `az storage blob upload/download` CLI workflow) — and placed it in `infra/storage.py`, importing `virtual_machine` from `infra/compute.py` (`storage → compute`). PR #8 needs the opposite direction: `infra/compute.py` importing `storage_account`/`blob_container` from `infra/storage.py`, for the BlobFuse2 mount config, with its own role assignment placed in `infra/compute.py` specifically to avoid a cycle "since `infra/storage.py` must stay free of importing this module back" (its own words, in `specs/02-managing-identity-storage.md`'s "Changes by resource"). Merging both untouched creates `storage.py → compute.py → storage.py` — not a stylistic clash, an `ImportError` the moment either module is imported.
 
-**Fix applied in this plan:** adopt PR #8's direction as the one direction. Move the existing `vm_storage_blob_data_contributor` role assignment (and its `_STORAGE_BLOB_DATA_CONTRIBUTOR_ROLE_ID` constant) out of `infra/storage.py` and into `infra/compute.py`, right after `virtual_machine` — the same place PR #8 puts its own role assignment, and for the same reason. `infra/storage.py` drops its `from infra.compute import virtual_machine` import and its now-unused `authorization` import entirely; nothing in `infra/storage.py` depends on `infra/compute.py` any more. This also resolves problem 2 below, since it means there's exactly one role assignment to place, not two.
+**Fix applied in this plan:** delete `infra/storage.py`'s `vm_storage_blob_data_contributor` role assignment and its `_STORAGE_BLOB_DATA_CONTRIBUTOR_ROLE_ID` constant **outright** — it isn't relocated or merged into anything, it's superseded by PR #8's own `storage_blob_data_reader_role_assignment`, which already lives in `infra/compute.py` exactly where it needs to be. `infra/storage.py` drops its `from infra.compute import virtual_machine` import and its now-unused `authorization` import entirely; nothing in `infra/storage.py` depends on `infra/compute.py` any more, so the cycle is resolved by removal, not rearrangement.
 
-### 2. Two overlapping RBAC grants on the same identity would silently defeat PR #8's least-privilege goal
+### 2. Two overlapping RBAC grants on the same identity — resolved by dropping the account-wide Contributor grant, accepting that the VM's CLI upload workflow breaks
 
 - `consolidation`'s existing grant: **Storage Blob Data Contributor**, scoped to `storage_account.id` — the *whole account*, read **and** write.
-- PR #8's new grant: **Storage Blob Data Reader**, scoped to `blob_container.id` — one container, read-only.
+- PR #8's grant: **Storage Blob Data Reader**, scoped to `blob_container.id` — one container, read-only.
 
-Azure RBAC grants are additive: if both land, the VM's identity ends up with the *union* — which is exactly the broader, account-wide, read-write grant that already exists. The narrower Reader-on-one-container assignment becomes inert: it grants nothing the Contributor-on-the-account assignment didn't already cover. That's not just redundant, it's actively misleading, because PR #8's own manual verification procedure (`specs/02-managing-identity-storage.md`, "Verifying the mount" step 3 and "Troubleshooting the mount with IMDS and curl" steps 3–4) is built entirely around confirming this identity **cannot** write to the container or read any other container — `touch` inside the mount expecting `Permission denied`, and raw `curl` `PUT`/list calls against the container and the account root expecting `403 Forbidden`. With the existing Contributor-on-the-account grant still in place, every one of those checks would unexpectedly **succeed** (the write would go through, the other container would list), and nothing in the merged code would explain why — a live-verification trap left for whoever runs it, not a documentation nitpick.
+Azure RBAC grants are additive: if both landed, the VM's identity would end up with the *union* — the broader, account-wide, read-write grant — and PR #8's entire "read-only, single-container, least-privilege" design (verified end-to-end in `specs/02-managing-identity-storage.md` via `touch`/`curl` checks expecting `403`/`Permission denied`) would be silently defeated by the grant already on `consolidation`.
 
-**This plan resolves it by keeping a single role assignment, not two — narrowed in scope but not in role level:** keep the existing `vm_storage_blob_data_contributor` (Contributor, needed for the already-shipped `az storage blob upload/download --auth-mode login` CLI workflow in `README-Storage.md`, which needs write access), but change its `scope` from `storage_account.id` to `blob_container.id`. `rse-demo-container` is the only container either workflow — the CLI path or the BlobFuse2 mount — ever touches, so this is a genuine tightening (account-wide → single-container) even though it keeps write capability PR #8's original Reader-only design didn't have.
+**Resolved per explicit direction: keep PR #8's RBAC design unchanged, and remove `consolidation`'s Contributor-on-the-account grant entirely** (see problem 1's fix) rather than finding a compromise scope or role level. No new role assignment is written for this plan — PR #8's `storage_blob_data_reader_role_assignment` becomes the VM's *only* storage grant, verbatim.
 
-**The trade-off, made explicit rather than left implicit:** this is *not* the same posture PR #8 designed and tested for. BlobFuse2's own `--read-only=true` mount flag still stops writes through the mount itself, but the RBAC layer underneath no longer independently backs that up (an identity holding Contributor could still write via the CLI path, bypassing the mount's read-only flag). PR #8's `specs/02-managing-identity-storage.md` needs updating to say so plainly, and its `touch`/`curl -X PUT` verification steps need updating to expect success (proving *the mount's* read-only flag, not the RBAC layer) rather than `403`/`Permission denied` — see step 8 below. Restoring true RBAC-backed read-only defense-in-depth (e.g. a second, narrower identity or role dedicated to the mount, separate from whatever needs write) is flagged as a future call in "Out of scope for this document", not attempted here, consistent with how `consolidating-storage-firewall.md` already leaves the now-unexercised `AllowAzureStorage` firewall rule in place rather than removing it.
+**The accepted consequence:** `README-Storage.md`'s `az storage blob upload --auth-mode login` workflow (added by the storage-firewall consolidation's own follow-up, `22fb7e8`, specifically so the VM could upload/download without a manual RBAC step) **stops working** once this lands — Reader grants no write access, so the upload call fails (`AuthorizationPermissionMismatch`/`403`). This is intentional, not a regression to chase: least-privilege for the VM's storage access takes priority over keeping that CLI workflow's write path alive. `az storage blob download --auth-mode login` (a read) continues to succeed as an incidental side effect of the same Reader grant, but this plan doesn't rely on or optimize for that — `README-Storage.md` is updated (step 7 below) to say the upload path is gone, not to keep documenting it as if it still worked.
 
 ### 3. BlobFuse2's `packages-microsoft-prod.deb` install alongside the existing manual `packages.microsoft.com` apt sources
 
-The VM's cloud-init already registers `packages.microsoft.com` twice, manually (a GPG key + a `.sources` file each, for the VS Code and Azure CLI repos — see `infra/templates/vm-cloud-init.yaml.j2`, added by `858503c`/pre-existing scenario work). PR #8 registers the same host a third way, via Microsoft's generic `packages-microsoft-prod.deb` installer (its own GPG key import + its own `apt` source file, for a different repo path — the Ubuntu "jammy" `blobfuse2`/`fuse3` feed). These target different repo paths under the same host, so `apt` handling three separate source entries for `packages.microsoft.com` is expected to be harmless — but it hasn't been exercised together on a real VM, and a duplicate-key or duplicate-source warning during `apt-get update` (not necessarily a failure) is plausible. Flagged for the manual `pulumi up` verification (step 8 below) to actually check, rather than assumed clean; not a blocker to merging.
+The VM's cloud-init already registers `packages.microsoft.com` twice, manually (a GPG key + a `.sources` file each, for the VS Code and Azure CLI repos — see `infra/templates/vm-cloud-init.yaml.j2`, added by `858503c`/pre-existing scenario work). PR #8 registers the same host a third way, via Microsoft's generic `packages-microsoft-prod.deb` installer (its own GPG key import + its own `apt` source file, for a different repo path — the Ubuntu "jammy" `blobfuse2`/`fuse3` feed). These target different repo paths under the same host, so `apt` handling three separate source entries for `packages.microsoft.com` is expected to be harmless — but it hasn't been exercised together on a real VM, and a duplicate-key or duplicate-source warning during `apt-get update` (not necessarily a failure) is plausible. Flagged for the manual `pulumi up` verification (step 9 below) to actually check, rather than assumed clean; not a blocker to merging.
 
 ### 4. BlobFuse2's `mode: msi` needs no Application Firewall change — worth stating, not assuming
 
@@ -66,69 +68,64 @@ Per `README-Firewall.md`'s existing "Consolidation note (managed identity)", `az
    ```
    Expect conflicts in exactly `infra/__init__.py` and `infra/compute.py` (per the `git merge-tree` check above); everything else (`infra/templates/vm-cloud-init.yaml.j2`, the two new BlobFuse2 templates, `specs/02-managing-identity-storage.md`) should auto-merge cleanly. Resolve both conflicted files by hand per steps 2–4 below — don't take either side wholesale.
 
-2. **Resolve `infra/storage.py`: remove the role assignment and its now-unneeded imports** (see problem 1). Delete the `vm_storage_blob_data_contributor` block, the `_STORAGE_BLOB_DATA_CONTRIBUTOR_ROLE_ID` constant, the `from infra.compute import virtual_machine` import, and the `authorization` import (`from pulumi_azure_native import authorization, network, storage` → `from pulumi_azure_native import network, storage`) from `infra/storage.py`. Nothing else in that file changes — `storage_subnet`, `storage_account`, `blob_container`, the private endpoint, and the private DNS zone group all stay exactly as they are on `consolidation`.
+2. **Resolve `infra/storage.py`: delete the existing role assignment, don't relocate it** (see problem 1). Delete the `vm_storage_blob_data_contributor` block entirely, the `_STORAGE_BLOB_DATA_CONTRIBUTOR_ROLE_ID` constant, the `from infra.compute import virtual_machine` import, and the `authorization` import (`from pulumi_azure_native import authorization, network, storage` → `from pulumi_azure_native import network, storage`). Nothing else in this file changes — `storage_subnet`, `storage_account`, `blob_container`, the private endpoint, and the private DNS zone group all stay exactly as they are on `consolidation`.
 
-3. **Resolve `infra/compute.py`: merge the docstring, add the BlobFuse2 mount, and place the (single, re-scoped) role assignment here.**
-   - Docstring: keep `consolidation`'s existing docstring (the Azure-CLI/`az login --identity` explanation, the Application-Firewall/network-ACL context) and fold in PR #8's BlobFuse2-mount summary, e.g.:
+3. **Resolve `infra/compute.py`: merge the docstring, and take PR #8's BlobFuse2 mount and role assignment as-is.**
+   - Docstring: keep `consolidation`'s existing docstring's Application-Firewall/network-ACL context, but update the storage-access description — the VM's identity is now read-only, and the CLI upload path is gone:
      ```python
      """Linux virtual machine reachable over RDP with a graphical desktop.
 
      VS Code, with the mssql extension, is the way to reach the SQL database (see
      specs/01-the-scenario.md - no managed identity/RBAC for the database yet).
-     The Azure CLI is also installed (see below) and is the way to reach the
-     storage account for uploads/downloads, signed in as this VM's own
-     system-assigned identity (`identity=` below) via `az login --identity` -
-     its own VS Code extension (also installed, for completeness) no longer
-     works once the Application Firewall and the storage account's own network
-     rules are in place. The same identity also mounts `rse-demo-container`
-     directly on the VM's filesystem via BlobFuse2 (`mode: msi`,
-     specs/02-managing-identity-storage.md) for read/browse access with no
-     sign-in step at all. See `vm_storage_blob_data_contributor` below for the
-     single RBAC grant behind both paths, and README-Storage.md for how each is
-     used from the VM.
-     ...
+     The VM's system-assigned managed identity (`identity=` below) is granted
+     read-only access to rse-demo-container only (see
+     storage_blob_data_reader_role_assignment below, and
+     specs/02-managing-identity-storage.md) - it's mounted directly on the
+     VM's filesystem via BlobFuse2 (`mode: msi`), so no sign-in step is
+     needed to browse it. The Azure CLI is also installed (see below); with
+     this identity's read-only grant, `az storage blob download --auth-mode
+     login` works but `az storage blob upload` does not - see
+     README-Storage.md.
+
+     Uses password authentication rather than an SSH key, in line with delaying
+     security hardening to a later iteration.
      """
      ```
    - Imports: add `authorization` to the existing `from pulumi_azure_native import compute, monitor` line, and add `from infra.storage import blob_container, storage_account` alongside the existing `infra.database`/`infra.monitoring`/`infra.networking`/`infra.resource_group` imports.
-   - Add the two new template paths/constants (`_BLOBFUSE2_CONFIG_TEMPLATE_PATH`, `_BLOBFUSE2_UNIT_TEMPLATE_PATH`, `_BLOBFUSE2_MOUNT_PATH`, `_BLOBFUSE2_CONFIG_PATH`, `_BLOBFUSE2_SERVICE_NAME`) and the two new `jinja2.Template(...)` instances, exactly as PR #8 defines them.
+   - Add the two new template paths/constants (`_BLOBFUSE2_CONFIG_TEMPLATE_PATH`, `_BLOBFUSE2_UNIT_TEMPLATE_PATH`, `_BLOBFUSE2_MOUNT_PATH`, `_BLOBFUSE2_CONFIG_PATH`, `_BLOBFUSE2_SERVICE_NAME`, `_STORAGE_BLOB_DATA_READER_ROLE_GUID`) and the two new `jinja2.Template(...)` instances, exactly as PR #8 defines them.
    - Extend `_custom_data`/`custom_data` to take and render `storage_account_name` (PR #8's version, verbatim) — `custom_data = pulumi.Output.all(sql_server.fully_qualified_domain_name, sql_database.name, storage_account.name).apply(...)`.
    - `virtual_machine = compute.VirtualMachine(...)`: keep `consolidation`'s `diagnostics_profile=compute.DiagnosticsProfileArgs(boot_diagnostics=...)` and its existing `identity=compute.VirtualMachineIdentityArgs(type=compute.ResourceIdentityType.SYSTEM_ASSIGNED)` (both sides add the identical `identity=` block — keep the one already there, don't duplicate it).
-   - Right after `virtual_machine`, and before the existing Log-Analytics extension/DCR-association block, add the **single, re-scoped** role assignment (see problem 2):
+   - Right after `virtual_machine`, and before the existing Log-Analytics extension/DCR-association block, add PR #8's role assignment **verbatim, unchanged**:
      ```python
-     # Grants the VM's own system-assigned managed identity data-plane access
-     # to rse-demo-container - scoped to that one container, not the whole
-     # storage account, so nothing else on the account is in reach. Backs
-     # both `az storage blob upload/download --auth-mode login` (needs
-     # write, hence Contributor not Reader - see
-     # specs/consolidating-managing-identities.md) and the BlobFuse2 mount
-     # below (whose own --read-only=true mount flag is what actually keeps
-     # the mount read-only; this grant itself is not read-only).
-     # principal_type is set explicitly because the managed identity is
-     # created in this same deployment; without it, Azure AD replication lag
-     # between creating the identity and creating this role assignment can
-     # make the assignment fail validation.
-     vm_storage_blob_data_contributor = authorization.RoleAssignment(
-         "rse-vm-storage-blob-data-contributor",
+     # Lives here, not in infra/storage.py, because it needs the VM's identity
+     # (defined above) and infra/storage.py must stay free of importing this
+     # module back - it's already imported here for the BlobFuse2 config's
+     # storage account name, and Python can't resolve an import cycle between
+     # the two.
+     storage_blob_data_reader_role_assignment = authorization.RoleAssignment(
+         "rse-vm-storage-blob-data-reader",
+         scope=blob_container.id,
          principal_id=virtual_machine.identity.principal_id,
          principal_type=authorization.PrincipalType.SERVICE_PRINCIPAL,
          role_definition_id=pulumi.Output.concat(
-             resource_group.id,
+             "/subscriptions/",
+             authorization.get_client_config_output().subscription_id,
              "/providers/Microsoft.Authorization/roleDefinitions/",
-             _STORAGE_BLOB_DATA_CONTRIBUTOR_ROLE_ID,
+             _STORAGE_BLOB_DATA_READER_ROLE_GUID,
          ),
-         scope=blob_container.id,
      )
      ```
-     (`_STORAGE_BLOB_DATA_CONTRIBUTOR_ROLE_ID = "ba92f5b4-2d11-453d-a403-e96b0029c9fe"` — the same constant moved from `infra/storage.py`, unchanged.) This keeps `resource_group.id`-based `role_definition_id` construction (the pattern already on `consolidation`) rather than introducing PR #8's `authorization.get_client_config_output().subscription_id` pattern — both are valid, and reusing the existing one means no new `tests/conftest.py` mock is needed (see step 6).
+     This is the one deliberate departure from "reuse `consolidation`'s existing pattern": PR #8's `role_definition_id` is built from `authorization.get_client_config_output().subscription_id`, not the `resource_group.id`-based construction `consolidation`'s (now-deleted) grant used. Both are valid ways to build a fully-qualified built-in role ID; this plan keeps PR #8's version unchanged rather than adapting it, since the role assignment itself is being adopted as-is, not redesigned. This does mean `tests/conftest.py` needs the `getClientConfig` mock PR #8 adds — see step 6.
 
-4. **Resolve `infra/__init__.py`.** Combine both sides' re-exports and `__all__` entries — nothing is dropped, `vm_storage_blob_data_contributor` just moves from the `infra.storage` import to the `infra.compute` import:
+4. **Resolve `infra/__init__.py`.** Combine both sides' re-exports and `__all__` entries — `storage_blob_data_reader_role_assignment` moves into the `infra.compute` import list, and `vm_storage_blob_data_contributor` is dropped everywhere (the resource no longer exists):
    ```python
    from infra.compute import (
+       storage_blob_data_reader_role_assignment,
        virtual_machine,
        vm_admin_password,
-       vm_storage_blob_data_contributor,
    )
-   ...
+
+   # ... (other unaffected imports, unchanged) ...
    from infra.storage import (
        blob_container,
        storage_account,
@@ -137,67 +134,44 @@ Per `README-Firewall.md`'s existing "Consolidation note (managed identity)", `az
        storage_subnet,
    )
    ```
-   `__all__` keeps every existing entry (alphabetical, matching the file's existing ordering) — `vm_storage_blob_data_contributor` stays in the list, just conceptually now "from compute". No change to `__main__.py` — this consolidation adds no new stack outputs.
+   `__all__` gains `"storage_blob_data_reader_role_assignment"` (alphabetical, matching the file's existing ordering) and loses `"vm_storage_blob_data_contributor"`. No change to `__main__.py` — this consolidation adds no new stack outputs.
 
 5. **Bring in the cloud-init/template changes as-is.** `infra/templates/vm-cloud-init.yaml.j2` should auto-merge cleanly (confirm with `git status`/no conflict markers); `infra/templates/blobfuse2-config.yaml.j2` and `infra/templates/blobfuse2.service.j2` are added new, unchanged from PR #8.
 
-6. **Close the test coverage gap and adjust for the re-scoped role.**
-   - In `tests/test_storage.py`: remove `test_vm_storage_role_assignment_grants_data_contributor_on_the_storage_account` (the role assignment no longer lives here) and drop the now-unused `virtual_machine`/`vm_storage_blob_data_contributor` imports.
-   - In `tests/test_compute.py`: add PR #8's `test_virtual_machine_has_system_assigned_identity` and `test_custom_data_mounts_the_storage_container_with_blobfuse2` (verbatim — these don't depend on the role assignment's scope/role level). Add a replacement for the role-assignment test, moved from `test_storage.py` and updated for the new scope, importing `blob_container` alongside the existing `virtual_machine`:
+6. **Close the test coverage gap.**
+   - In `tests/test_storage.py`: remove `test_vm_storage_role_assignment_grants_data_contributor_on_the_storage_account` entirely (the resource it tests no longer exists) and drop the now-unused `virtual_machine`/`vm_storage_blob_data_contributor` imports.
+   - In `tests/test_compute.py`: add PR #8's three new tests verbatim — `test_virtual_machine_has_system_assigned_identity`, `test_custom_data_mounts_the_storage_container_with_blobfuse2`, and `test_storage_role_assignment_grants_read_only_on_the_container_only` (importing `storage_blob_data_reader_role_assignment` alongside the existing `virtual_machine`). No adaptation needed — the role/scope these tests assert on is exactly what's being kept.
+   - In `tests/conftest.py`: add PR #8's `getClientConfig` mock to `AzureMocks.call` (needed for `authorization.get_client_config_output().subscription_id` in step 3's role assignment to resolve under test):
      ```python
-     @pulumi.runtime.test
-     def test_vm_storage_role_assignment_grants_data_contributor_on_the_container(self):
-         def check(args: tuple) -> None:
-             (
-                 principal_id,
-                 principal_type,
-                 role_definition_id,
-                 scope,
-                 vm_principal_id,
-                 blob_container_id,
-             ) = args
-             self.assertEqual(principal_id, vm_principal_id)
-             self.assertEqual(principal_type, "ServicePrincipal")
-             self.assertIn("ba92f5b4-2d11-453d-a403-e96b0029c9fe", role_definition_id)
-             self.assertEqual(scope, blob_container_id)
-
-         return pulumi.Output.all(  # ty: ignore[missing-argument]
-             vm_storage_blob_data_contributor.principal_id,
-             vm_storage_blob_data_contributor.principal_type,
-             vm_storage_blob_data_contributor.role_definition_id,
-             vm_storage_blob_data_contributor.scope,
-             virtual_machine.identity.principal_id,
-             blob_container.id,
-         ).apply(check)  # ty: ignore[invalid-argument-type]
+     def call(self, args: pulumi.runtime.MockCallArgs):
+         if args.token == "azure-native:authorization:getClientConfig":
+             return {"subscriptionId": "00000000-0000-0000-0000-000000000000"}
+         return {}
      ```
-   - **Do not** add PR #8's own `storage_blob_data_reader_role_assignment`-scoped test or its `tests/conftest.py` `getClientConfig` mock — that resource doesn't exist in this merged design (see problem 2/step 3's `role_definition_id` choice), so both would reference a name that was never created.
    - Run the full suite in a disposable worktree before treating this as done, same as every prior consolidation.
 
 7. **Update documentation.**
-   - `specs/02-managing-identity-storage.md` (brought in by the merge): add a short "Consolidation note" near the top, matching `README-Storage.md`'s existing style, saying:
-     - The role assignment is **Storage Blob Data Contributor at container scope**, not Storage Blob Data Reader — it's the same grant `consolidation`'s storage-firewall follow-up already added for the `az storage blob upload/download` CLI workflow, narrowed from account-wide to `rse-demo-container` rather than duplicated (see `specs/consolidating-managing-identities.md`, "The compatibility problems" #2).
-     - Update "Design principles", "Changes by resource", "Verifying the mount" (step 3's `touch` check now expects the write to **succeed**, since the RBAC layer permits it — only BlobFuse2's own `--read-only=true` mount flag stops it, so the check becomes "confirm the *mount* refuses the write, not the identity"), and "Troubleshooting the mount with IMDS and curl" (steps 3–4's `curl` calls against other containers/the account root and the `PUT` call now expect success too, for the same reason) to match. Cross-reference this document rather than duplicating the reasoning.
-   - `README-Storage.md`: extend "Accessing the storage account from the virtual machine" with a short new subsection on the BlobFuse2 mount (`/mnt/rse-demo-container`, browsable directly with no sign-in step), noting it shares the same `vm_storage_blob_data_contributor` grant as the CLI workflow above it (now container-scoped) and that `mode: msi` reaches the VM's IMDS endpoint the same way `az login --identity` does — no Application Firewall change needed (problem 4 above).
-   - `README-Firewall.md`: extend the existing "Consolidation note (managed identity)" to mention BlobFuse2's `mode: msi` alongside `az login --identity` as another IMDS-based path that needs no firewall rule.
-   - `README.md`: update the `storage.py` bullet under "Project structure" to say the role assignment now lives in `compute.py` (moved there to avoid the import cycle — see this plan), and add a `compute.py` bullet mention of the BlobFuse2 mount.
+   - `specs/02-managing-identity-storage.md` (brought in by the merge): no correction needed to its RBAC design, goals, or verification/troubleshooting procedures — they already describe and test exactly the Reader/container-scoped grant this plan keeps. Add a short "Consolidation note" near the top (matching `README-Storage.md`'s existing style) pointing at this document for *why* it merges cleanly against `consolidation`'s prior state (the account-wide Contributor grant that predated this merge, and its removal) rather than re-deriving that reasoning here.
+   - `README-Storage.md`: rewrite "Accessing the storage account from the virtual machine" — the section currently documents `az login --identity` plus `vm_storage_blob_data_contributor` granting Contributor on the whole account, with a working `az storage blob upload` example. Replace it with:
+     - The VM's identity now holds **Storage Blob Data Reader**, scoped to `rse-demo-container` only (`storage_blob_data_reader_role_assignment`, `infra/compute.py`).
+     - `az storage blob download --auth-mode login` still works (a read, and the identity is read-scoped on this container); `az storage blob upload --auth-mode login` **no longer works** — remove that example, or keep it explicitly marked as no longer functional, rather than leaving working-looking upload instructions that now 403.
+     - A new subsection documenting the BlobFuse2 mount as the primary way to browse the container from the VM (`/mnt/rse-demo-container`, no sign-in step), noting `mode: msi` reaches the same IMDS endpoint `az login --identity` does — no Application Firewall change needed (problem 4 above).
+   - `README-Firewall.md`: extend the existing "Consolidation note (managed identity)" to mention BlobFuse2's `mode: msi` alongside `az login --identity` as another IMDS-based path that needs no firewall rule, and to note the identity's grant is now read-only/container-scoped rather than the account-wide Contributor grant the note currently describes.
+   - `README.md`: update the `storage.py` bullet under "Project structure" to drop the "role assignment granting the VM's managed identity data-plane access" mention (that resource no longer lives here), and add a `compute.py` bullet mentioning the read-only role assignment and the BlobFuse2 mount.
 
-8. **Re-verify PR #8's own manual procedure against the re-scoped role**, updating `specs/02-managing-identity-storage.md` per step 7 rather than leaving its checklist silently wrong:
-   - "Verifying the mount" step 3 (`touch` inside the mount) now demonstrates the **mount's** read-only flag, not an RBAC denial — expect `Permission denied` still (BlobFuse2 enforces `--read-only=true` regardless of the underlying role), but the doc's explanation of *why* needs to change from "enforced twice over... by the Storage Blob Data *Reader* role" to "enforced by the mount's `--read-only=true` flag; the underlying role is Contributor, shared with the CLI upload/download path".
-   - "Troubleshooting... with IMDS and curl" steps 3–4 (raw `curl` against another container / the account root / a `PUT`) now genuinely succeed rather than 403 — the doc must say so, or whoever runs this will reasonably conclude the deployment is broken.
-
-9. **Manual verification that the merge itself is correct.**
+8. **Manual verification that the merge itself is correct.**
    ```sh
    git log --oneline -5                          # merge commit + "Access the storage container..." both present
    git status                                     # working tree clean, no leftover conflict markers
    grep -rn "^<<<<<<<\|^=======\|^>>>>>>>" --include='*.py' .   # no unresolved conflict markers
    git diff origin/01-managing-identity consolidation -- infra/compute.py infra/storage.py infra/__init__.py
-                                                   # should show only this plan's re-scoping/relocation, not a lost feature
+                                                   # should show only the docstring/import merge from step 3, not a changed role or scope
    ```
 
-10. **Manual verification that the Pulumi program actually implements this end-to-end.** Per [CLAUDE.md § No live deployments](../CLAUDE.md#no-live-deployments-as-part-of-building-a-feature), `pulumi preview`/`pulumi up` are **run by the user, not Claude** — unit tests and static checks are as far as automated verification goes here.
-    - `pulumi preview` first — expect the VM to be **replaced** (cloud-init content changes again, on top of the storage-firewall consolidation's own replace — see problem 5), `vm_storage_blob_data_contributor` to be **replaced** (its `scope` changes from the storage account to the container — not an in-place update), and the two new templates/role assignment to otherwise apply cleanly.
-    - `pulumi up`, then from an RDP session on the VM: run `apt-get update` and confirm no fatal error from the third `packages.microsoft.com` registration (problem 3) alongside the existing two; run `specs/02-managing-identity-storage.md`'s "Verifying the mount" procedure (`systemctl status blobfuse2-rse-demo-container.service`, `ls -la /mnt/rse-demo-container`, `touch` — expect `Permission denied` from the mount flag) and confirm `az storage blob upload/download --auth-mode login` (from `README-Storage.md`) still works, proving one role assignment now backs both paths.
-    - Confirm (per the updated troubleshooting section, step 8 above) that a raw `curl` `PUT` and a listing of a *different* container both now **succeed** rather than `403` — proving this plan's trade-off (Contributor-at-container-scope, not Reader) is what's actually deployed, not a leftover assumption from PR #8's original design.
+9. **Manual verification that the Pulumi program actually implements this end-to-end.** Per [CLAUDE.md § No live deployments](../CLAUDE.md#no-live-deployments-as-part-of-building-a-feature), `pulumi preview`/`pulumi up` are **run by the user, not Claude** — unit tests and static checks are as far as automated verification goes here.
+   - `pulumi preview` first — expect the VM to be **replaced** (cloud-init content changes again, on top of the storage-firewall consolidation's own replace — see problem 5); expect `vm_storage_blob_data_contributor` to be **destroyed** and `storage_blob_data_reader_role_assignment` to be **created** (these are different resources/URNs, not an in-place update of one into the other).
+   - `pulumi up`, then from an RDP session on the VM: run `apt-get update` and confirm no fatal error from the third `packages.microsoft.com` registration (problem 3) alongside the existing two; run `specs/02-managing-identity-storage.md`'s "Verifying the mount" and "Troubleshooting the mount with IMDS and curl" procedures unchanged — expect every `403 Forbidden`/`Permission denied` check in them to actually occur now, since nothing broader is granted any more.
+   - **Confirm the accepted regression, not just the new behaviour:** `az storage blob upload --auth-mode login` (from `README-Storage.md`'s pre-existing guidance) should now fail with an authorization error; `az storage blob download --auth-mode login` should still succeed. Update `README-Storage.md` (step 7) to match whichever of these the user wants documented, rather than leaving the old upload example looking current.
 
 ## Verification checklist
 
@@ -205,22 +179,22 @@ Per `README-Firewall.md`'s existing "Consolidation note (managed identity)", `az
 - [ ] `uv run ruff check .` passes.
 - [ ] `uv run ruff format --check .` passes.
 - [ ] `uv run ty check` passes.
-- [ ] `uv run pytest` passes, including the new/moved tests in `tests/test_compute.py` and the removal of the stale role-assignment test from `tests/test_storage.py`.
+- [ ] `uv run pytest` passes, including PR #8's three tests brought into `tests/test_compute.py`, the `getClientConfig` mock in `tests/conftest.py`, and the removal of the stale role-assignment test from `tests/test_storage.py`.
 - [ ] `infra/storage.py` no longer imports anything from `infra/compute.py`, and no longer defines any `authorization.RoleAssignment`.
-- [ ] `infra/compute.py` defines exactly **one** `authorization.RoleAssignment` (`vm_storage_blob_data_contributor`), scoped to `blob_container.id`, role Storage Blob Data **Contributor** — PR #8's separate `storage_blob_data_reader_role_assignment` does not exist in the merged code.
+- [ ] `infra/compute.py` defines exactly **one** `authorization.RoleAssignment` (`storage_blob_data_reader_role_assignment`), scoped to `blob_container.id`, role Storage Blob Data **Reader** — `vm_storage_blob_data_contributor` does not exist anywhere in the merged code.
 - [ ] `infra/compute.py`'s `custom_data` renders the BlobFuse2 config/unit and installs `fuse3`/`blobfuse2` via cloud-init.
-- [ ] `infra/__init__.py` re-exports `vm_storage_blob_data_contributor` from `infra.compute`, not `infra.storage`.
-- [ ] `specs/02-managing-identity-storage.md`'s "Design principles"/"Changes by resource"/verification sections reflect Contributor-at-container-scope, not Reader, and its `touch`/`curl` checks expect the corrected outcomes.
-- [ ] `README-Storage.md`, `README-Firewall.md`, and `README.md` reflect the BlobFuse2 mount, the single shared role assignment, and the IMDS/no-firewall-change note.
-- [ ] (Manual, by the user) `git log`/`git status`/the targeted `git diff` in step 9 confirm the merge captured every file PR #8 touches, with no leftover conflict markers.
-- [ ] (Manual, by the user) `pulumi preview`/`pulumi up` succeed against the `dev` stack; the VM and the role assignment both show as replaced, not merely updated.
-- [ ] (Manual, by the user) The BlobFuse2 mount comes up (`active (running)`) and `/mnt/rse-demo-container` is browsable; `az storage blob upload/download --auth-mode login` still works via the same identity.
-- [ ] (Manual, by the user) A write attempt through the mount is refused (by the mount flag); a raw `curl`/CLI write or cross-container read via the identity's token succeeds (by the RBAC grant) — confirming the documented trade-off, not a silent gap.
+- [ ] `infra/__init__.py` re-exports `storage_blob_data_reader_role_assignment` from `infra.compute`.
+- [ ] `README-Storage.md` no longer documents a working `az storage blob upload --auth-mode login` example from the VM, and documents the BlobFuse2 mount as the primary VM-side access path.
+- [ ] `README-Firewall.md` and `README.md` reflect the read-only, container-scoped grant and the BlobFuse2 mount.
+- [ ] (Manual, by the user) `git log`/`git status`/the targeted `git diff` in step 8 confirm the merge captured every file PR #8 touches, with no leftover conflict markers.
+- [ ] (Manual, by the user) `pulumi preview`/`pulumi up` succeed against the `dev` stack; `vm_storage_blob_data_contributor` is destroyed and `storage_blob_data_reader_role_assignment` is created.
+- [ ] (Manual, by the user) The BlobFuse2 mount comes up (`active (running)`) and `/mnt/rse-demo-container` is browsable read-only; every `403`/`Permission denied` check in `specs/02-managing-identity-storage.md`'s verification/troubleshooting sections actually occurs.
+- [ ] (Manual, by the user) `az storage blob upload --auth-mode login` fails from the VM (accepted); `az storage blob download --auth-mode login` still succeeds.
 
 ## Out of scope for this document
 
-- Restoring true RBAC-backed read-only/least-privilege for the BlobFuse2 mount specifically (e.g. a second, narrower identity or role dedicated only to the mount, separate from whatever needs write access via the CLI) — this plan deliberately keeps one shared Contributor-at-container-scope grant instead, per "The compatibility problems" #2, and flags the trade-off rather than solving it. A future iteration could revisit this if the CLI upload/download workflow and the mount's access needs are ever meant to diverge.
+- Restoring the VM's ability to upload/write to the storage account via the Azure CLI (e.g. a second, write-capable identity or role kept alongside the read-only one) — explicitly not preserved by this plan, per direction. `README-Storage.md`'s `az storage blob upload` workflow is accepted as broken, not a gap for a future iteration to close by default; if write access from the VM is wanted again later, that's a new design decision, not an oversight here.
 - Database access via managed identity, VNet segmentation, NSG narrowing, SSH-key auth, or RBAC for human/operator access to the resource group — all already flagged as deferred in `specs/01-the-scenario.md`'s "Planned follow-up" section and in PR #8's own `specs/02-managing-identity-storage.md`'s "Out of scope (still deferred)".
 - Removing the storage account's retained primary key/its stack output — PR #8 and the existing storage-firewall consolidation both keep it for human management purposes; unaffected by this plan.
-- Chasing down whether the third `packages.microsoft.com` apt registration (problem 3) produces a benign warning or something worse — flagged for the manual verification in step 10, not resolved here without a live VM.
-- Claude running `pulumi preview`/`pulumi up`, or the manual mount/RBAC verification procedures — per [CLAUDE.md](../CLAUDE.md), all of that is the user's to run (steps 8–10 above are written for the user to execute).
+- Chasing down whether the third `packages.microsoft.com` apt registration (problem 3) produces a benign warning or something worse — flagged for the manual verification in step 9, not resolved here without a live VM.
+- Claude running `pulumi preview`/`pulumi up`, or the manual mount/RBAC verification procedures — per [CLAUDE.md](../CLAUDE.md), all of that is the user's to run (steps 8–9 above are written for the user to execute).

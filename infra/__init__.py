@@ -9,7 +9,11 @@ from infra.bastion import bastion_host
 from infra.bastion_networking import (
     bastion_public_ip,
 )
-from infra.compute import virtual_machine, vm_admin_password
+from infra.compute import (
+    storage_blob_data_reader_role_assignment,
+    virtual_machine,
+    vm_admin_password,
+)
 from infra.database import (
     admin_username,
     db_admin_password,
@@ -33,7 +37,6 @@ from infra.storage import (
     storage_account_private_dns_zone_group,
     storage_account_private_endpoint,
     storage_subnet,
-    vm_storage_blob_data_contributor,
 )
 
 __all__ = [
@@ -56,11 +59,11 @@ __all__ = [
     "storage_account",
     "storage_account_private_dns_zone_group",
     "storage_account_private_endpoint",
+    "storage_blob_data_reader_role_assignment",
     "storage_subnet",
     "virtual_machine",
     "virtual_network",
     "workspace_analytics",
     "vm_admin_password",
-    "vm_storage_blob_data_contributor",
     "vm_subnet",
 ]
