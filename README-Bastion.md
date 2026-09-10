@@ -22,11 +22,11 @@ Indeed, keeping the public IP address would be a security vulnerability, comprom
 
 To remove it we simply drop the `public_ip` resource and remove the reference to it from the `network_interface` resource.
 
-To see the full details check the changes to the `infa/networking.py` file.
+To see the full details check the changes to the `infra/networking.py` file.
 
 ### Add a subnet for the bastion host
 
-We create a new file `infra/bastion_network.py` that defines subnet for the bastion host.
+We create a new file `infra/bastion_networking.py` that defines subnet for the bastion host.
 The resource that creates this is called `bastion_subnet` and is configured to use the `virtual_network` virtual network created in `infra/networking.py`.
 We must use a separate address space within the virtual network from the virtual machine.
 

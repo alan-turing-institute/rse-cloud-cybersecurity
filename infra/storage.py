@@ -1,4 +1,15 @@
-"""Storage account, reachable over the public internet at this stage."""
+"""Storage account and its blob container, restricted by a Storage Account
+firewall to the Turing VPN and specific VNet subnets (see README-Storage.md),
+with at-rest encryption and a private endpoint for the blob service. Once
+the "blob" private DNS zone is populated (storage_account_private_dns_zone_group
+below), the VM's own traffic actually goes over that private endpoint rather
+than through either of this file's own network-ACL mechanisms - see
+README-Storage.md for the full access-path story.
+
+The VM's own access (a read-only, container-scoped managed-identity role
+assignment) lives in infra/compute.py, not here - see that module's
+docstring for why.
+"""
 
 import pulumi
 from pulumi_azure_native import network, storage
@@ -73,7 +84,7 @@ storage_account = storage.StorageAccount(
     public_network_access=storage.PublicNetworkAccess.ENABLED,
 )
 
-# Create a a blob container within the storage account
+# Create a blob container within the storage account
 blob_container = storage.BlobContainer(
     "rse-demo-container",
     resource_group_name=resource_group.name,

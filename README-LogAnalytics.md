@@ -130,7 +130,7 @@ https://docs.azure.cn/en-us/azure-monitor/alerts/alerts-create-metric-alert-rule
 ## Viewing Logs
 
 Logs will now be collected in the Log Analytics Workspace which can be accessed through the Azure Portal.
-Navigate to the relevant subscription, select the appropriate resource group, in our case `rse-cloud-sybesecurity-rg`.
+Navigate to the relevant subscription, select the appropriate resource group, in our case `rse-cloud-cybersecurity-rg`.
 There you'll see a Log Analytics workspace component.
 In our case this is called `rse-log-analytics`.
 

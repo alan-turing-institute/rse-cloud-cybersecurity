@@ -1,5 +1,5 @@
 """Shared random suffix for globally-unique Azure resource names (storage
-accounts and PostgreSQL servers are both named in a global, not per-account,
+accounts and SQL logical servers are both named in a global, not per-account,
 namespace).
 """
 

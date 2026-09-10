@@ -1,11 +1,15 @@
 """Networking resources for the virtual machine.
 
-The VM is meant to be reachable directly over the public internet (see
-specs/01-the-scenario.md - security hardening is a later iteration). The one
-exception is a minimal NSG allowing inbound SSH and RDP from anywhere, added
-purely so the VM (and its graphical desktop) is reachable for the demo - it
-is not a security boundary, and every other port stays open via the default
-allow-all rules.
+The VM's network interface has no public IP of its own - it was removed when
+Azure Bastion was added (see specs/consolidating-bastion.md). The VM is
+reached via the Bastion host (infra/bastion.py) for the general case, or via
+the Application Firewall's NAT rule (infra/firewall.py) for a narrower demo
+path - see README-Bastion.md and README-Firewall.md. The NSG below (allowing
+inbound SSH/RDP from the Internet) is defence in depth rather than the
+actual way in, now that nothing here carries a direct public IP; outbound
+traffic from vm_subnet is routed through the Application Firewall via
+`route_table` (populated by infra/firewall.py, not this module - see the
+`ignore_changes` note below).
 """
 
 from pulumi import ResourceOptions

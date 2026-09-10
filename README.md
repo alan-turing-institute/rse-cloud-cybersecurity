@@ -138,4 +138,12 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
 
 ### Current scenario
 
-See [`specs/01-the-scenario.md`](specs/01-the-scenario.md) for the design behind the current infrastructure — a storage account, an Azure SQL Database (Basic tier — the cheapest managed RDBMS on Azure), and a Linux VM able to reach both, all kept at minimum cost. This is the initial iteration: security hardening (private networking, managed identity, RBAC) is intentionally deferred to a later iteration, so the storage account, database, and VM are all reachable over the public internet. See [`CLAUDE.md`](CLAUDE.md) for how changes to this infrastructure are verified (unit tests and static checks only — no live deployments).
+See [`specs/01-the-scenario.md`](specs/01-the-scenario.md) for the original design behind this infrastructure — a storage account, an Azure SQL Database (Basic tier — the cheapest managed RDBMS on Azure), and a Linux VM able to reach both, all kept at minimum cost. Several of that document's own planned security-hardening follow-ups have since been folded into this branch:
+
+- **Azure Bastion** for VM access, replacing a directly internet-facing public IP (`README-Bastion.md`).
+- A **Log Analytics workspace** with CPU/memory metric alerts (`README-LogAnalytics.md`).
+- An **Application Firewall** restricting the VM's outbound access and routing it through the firewall (`README-Firewall.md`).
+- A **Storage Account firewall and private endpoint**, restricting storage access to the Turing VPN, specific VNet subnets, and Private Link (`README-Storage.md`).
+- A **system-assigned managed identity** on the VM, granted read-only access to its own storage container instead of the account key, backing both an Azure CLI download path and a read-only BlobFuse2 filesystem mount (`README-Storage.md`, [`specs/02-managing-identity-storage.md`](specs/02-managing-identity-storage.md)).
+
+The Azure SQL Database is still fully reachable over the public internet (no VNet integration, no managed identity for database access) — that, RBAC for human/operator access to the resource group, and SSH-key authentication on the VM all remain deferred to a later iteration. See [`CLAUDE.md`](CLAUDE.md) for how changes to this infrastructure are verified (unit tests and static checks only — no live deployments).
