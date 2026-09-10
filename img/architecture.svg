@@ -1,0 +1,267 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2520 1408"><rect x="0" y="0" width="2520" height="1408" fill="#FFFFFF"/>
+<defs><marker id="arrow-c0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#323130"/></marker><marker id="arrow-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#773ADC"/></marker><marker id="arrow-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#008272"/></marker><marker id="arrow-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#004E8C"/></marker><marker id="arrow-c4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C4148A"/></marker><marker id="arrow-c5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#CA5010"/></marker></defs>
+<text x="1260.0" y="40" font-size="24" font-weight="700" font-style="normal" text-anchor="middle" fill="#1B1B1B">RSE Cloud Cybersecurity — Azure Deployment Architecture</text>
+<text x="1260.0" y="64" font-size="13" font-weight="normal" font-style="normal" text-anchor="middle" fill="#5B5B5B">Generated from the Pulumi program (infra/) · consolidation branch</text>
+<g transform="translate(36,140)">
+<rect x="0" y="0" width="52" height="52" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 13.52 34.32 A 8.32 8.32 0 1 1 15.6 18.72 A 10.4 10.4 0 0 1 35.36 14.560000000000002 A 9.36 9.36 0 1 1 37.44 34.32 Z"/></g>
+</g>
+<text x="96" y="162" font-size="14" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Internet</text>
+<text x="96" y="180" font-size="11" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">external users &amp; VM outbound</text>
+<g transform="translate(40,260)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#5B5B5B" stroke="#5B5B5B" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="20.0" cy="12.8" r="5.6000000000000005"/><path d="M 9.6 32.8 C 9.6 24.0 30.4 24.0 30.4 32.8"/></g>
+</g>
+<text x="90" y="284" font-size="12.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Administrator</text>
+<text x="90" y="300" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">(any source, browser)</text>
+<g transform="translate(40,410)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#5B5B5B" stroke="#5B5B5B" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="20.0" cy="20.0" r="12.8"/><ellipse cx="20.0" cy="20.0" rx="5.6000000000000005" ry="12.8"/><line x1="7.199999999999999" y1="20.0" x2="32.8" y2="20.0"/></g>
+</g>
+<text x="90" y="434" font-size="12.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Fixed source IP</text>
+<text x="90" y="450" font-size="11.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">193.60.220.253</text>
+<text x="90" y="465" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">(allow-listed network)</text>
+<rect x="300" y="100" width="1950" height="942" rx="10" ry="10" fill="none" stroke="#8A8886" stroke-width="1.8" stroke-dasharray="7,5"/>
+<rect x="330" y="160" width="1450" height="802" rx="10" ry="10" fill="#EFF6FC" stroke="#0078D4" stroke-width="2"/>
+<rect x="409" y="216" width="1282" height="150" rx="8" ry="8" fill="#FFFFFF" stroke="#A6A6A6" stroke-width="1.4" stroke-dasharray="4,4"/>
+<text x="499" y="236" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Subnet · rse-vm-subnet  (10.0.1.0/24)  ·  service endpoint: Microsoft.Storage</text>
+<g transform="translate(421,258)">
+<rect x="0" y="0" width="44" height="44" rx="8" ry="8" fill="#0078D4" stroke="#0078D4" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="7.04" y="7.04" width="29.92" height="22.0" rx="2"/><line x1="22.0" y1="29.040000000000003" x2="22.0" y2="34.32"/><line x1="14.08" y1="36.08" x2="29.92" y2="36.08"/></g>
+</g>
+<text x="471" y="275.6" font-size="13.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-vm</text>
+<text x="471" y="290.6" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Standard_B2s · Ubuntu 22.04 · no public IP</text>
+<g transform="translate(769,258)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 20.0 5.6000000000000005 L 32.0 9.6 L 32.0 20.0 C 32.0 28.799999999999997 26.400000000000002 32.8 20.0 35.2 C 13.600000000000001 32.8 8.0 28.799999999999997 8.0 20.0 L 8.0 9.6 Z"/></g>
+</g>
+<text x="815" y="274.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-vm-nsg</text>
+<text x="815" y="289.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">allow SSH/RDP inbound</text>
+<text x="815" y="306" font-size="9.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">(defence-in-depth, not the</text>
+<text x="815" y="319" font-size="9.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">actual access path)</text>
+<g transform="translate(1059,258)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="6.4" y1="20.0" x2="28.799999999999997" y2="20.0"/><path d="M 24.0 15.2 L 30.4 20.0 L 24.0 24.8"/></g>
+</g>
+<text x="1105" y="274.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-route-table</text>
+<text x="1105" y="289.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">0.0.0.0/0 → Azure Firewall</text>
+<g transform="translate(1359,258)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#004E8C" stroke="#004E8C" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12.8" cy="20.0" r="6.4"/><line x1="18.400000000000002" y1="20.0" x2="33.6" y2="20.0"/><line x1="28.0" y1="20.0" x2="28.0" y2="26.400000000000002"/><line x1="32.0" y1="20.0" x2="32.0" y2="24.8"/></g>
+</g>
+<text x="1405" y="274.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">System-assigned identity</text>
+<text x="1405" y="289.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Storage Blob Data Reader</text>
+<rect x="409" y="394" width="1282" height="110" rx="8" ry="8" fill="#FFFFFF" stroke="#A6A6A6" stroke-width="1.4" stroke-dasharray="4,4"/>
+<text x="499" y="414" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Subnet · AzureBastionSubnet  (10.0.2.0/24)</text>
+<g transform="translate(421,434)">
+<rect x="0" y="0" width="44" height="44" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 22.0 5.279999999999999 L 34.32 9.68 L 34.32 21.119999999999997 C 34.32 29.92 28.6 34.32 22.0 36.96 C 15.399999999999999 34.32 9.68 29.92 9.68 21.119999999999997 L 9.68 9.68 Z"/><rect x="18.04" y="20.240000000000002" width="7.92" height="6.16" rx="2"/><path d="M 19.36 20.240000000000002 L 19.36 17.6 A 2.6399999999999997 2.6399999999999997 0 0 1 24.64 17.6 L 24.64 20.240000000000002"/></g>
+</g>
+<text x="471" y="451.6" font-size="13.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-bastion</text>
+<text x="471" y="466.6" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Bastion Host · Standard SKU</text>
+<g transform="translate(889,434)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 20.0 5.6000000000000005 L 32.0 9.6 L 32.0 20.0 C 32.0 28.799999999999997 26.400000000000002 32.8 20.0 35.2 C 13.600000000000001 32.8 8.0 28.799999999999997 8.0 20.0 L 8.0 9.6 Z"/></g>
+</g>
+<text x="935" y="450.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-bastion-nsg</text>
+<text x="935" y="465.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">HTTPS 443 + data-plane rules</text>
+<g transform="translate(1259,434)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="20.0" cy="20.0" r="12.8"/><ellipse cx="20.0" cy="20.0" rx="5.6000000000000005" ry="12.8"/><line x1="7.199999999999999" y1="20.0" x2="32.8" y2="20.0"/></g>
+</g>
+<text x="1305" y="450.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-bastion-public-ip</text>
+<text x="1305" y="465.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Standard SKU</text>
+<rect x="409" y="532" width="633.0" height="150" rx="8" ry="8" fill="#FFFFFF" stroke="#A6A6A6" stroke-width="1.4" stroke-dasharray="4,4"/>
+<text x="499" y="552" font-size="11.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Subnet · AzureFirewallSubnet</text>
+<text x="499" y="567" font-size="10" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">(10.0.4.0/24)</text>
+<g transform="translate(421,580)">
+<rect x="0" y="0" width="44" height="44" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 22.0 6.16 L 35.2 10.559999999999999 L 35.2 22.0 C 35.2 31.68 29.040000000000003 36.08 22.0 38.72 C 14.96 36.08 8.8 31.68 8.8 22.0 L 8.8 10.559999999999999 Z"/></g>
+</g>
+<text x="471" y="597.6" font-size="13.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-firewall</text>
+<text x="471" y="612.6" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Basic SKU</text>
+<text x="471" y="628.0" font-size="10" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Public IPs: rse-pip-firewall,</text>
+<text x="471" y="641.5" font-size="10" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">rse-pip-firewall-management</text>
+<text x="471" y="655.0" font-size="10" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">NAT: DNAT SSH:22 from 193.60.220.253</text>
+<text x="471" y="668.5" font-size="10" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">App rules: allow-listed FQDNs only</text>
+<rect x="1058.0" y="532" width="633.0" height="150" rx="8" ry="8" fill="#FFFFFF" stroke="#A6A6A6" stroke-width="1.4" stroke-dasharray="4,4"/>
+<text x="1070.0" y="552" font-size="11" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Subnet · AzureFirewallManagementSubnet</text>
+<text x="1070.0" y="567" font-size="10" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">(10.0.5.0/24)</text>
+<g transform="translate(1070.0,587)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="8.8" y="12.0" width="22.400000000000002" height="16.0" rx="2"/><line x1="12.0" y1="12.0" x2="12.0" y2="7.199999999999999"/><line x1="20.0" y1="12.0" x2="20.0" y2="7.199999999999999"/><line x1="28.0" y1="12.0" x2="28.0" y2="7.199999999999999"/></g>
+</g>
+<text x="1116.0" y="603.0" font-size="11.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Firewall mgmt NIC</text>
+<text x="1116.0" y="618.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">required for Basic-SKU firewall</text>
+<rect x="409" y="710" width="1282" height="100" rx="8" ry="8" fill="#FFFFFF" stroke="#A6A6A6" stroke-width="1.4" stroke-dasharray="4,4"/>
+<text x="499" y="730" font-size="11.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Subnet · rse-storage-subnet  (10.0.6.0/24)  ·  service endpoint: Microsoft.Storage</text>
+<g transform="translate(421,752)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#008272" stroke="#008272" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="20.0" y1="5.6000000000000005" x2="20.0" y2="13.600000000000001"/><rect x="12.8" y="13.600000000000001" width="14.399999999999999" height="8.8" rx="4"/><line x1="20.0" y1="22.400000000000002" x2="20.0" y2="35.2"/><line x1="13.600000000000001" y1="28.0" x2="26.400000000000002" y2="28.0"/></g>
+</g>
+<text x="467" y="768.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Private endpoint (blob)</text>
+<text x="467" y="783.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">rse-storage-account-private-endpoint</text>
+<rect x="409" y="838" width="1282" height="100" rx="8" ry="8" fill="#FFFFFF" stroke="#A6A6A6" stroke-width="1.4" stroke-dasharray="4,4"/>
+<text x="499" y="858" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Subnet · rse-monitoring-subnet  (10.0.3.0/24)</text>
+<g transform="translate(421,880)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#C4148A" stroke="#C4148A" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="20.0" y1="5.6000000000000005" x2="20.0" y2="13.600000000000001"/><rect x="12.8" y="13.600000000000001" width="14.399999999999999" height="8.8" rx="4"/><line x1="20.0" y1="22.400000000000002" x2="20.0" y2="35.2"/><line x1="13.600000000000001" y1="28.0" x2="26.400000000000002" y2="28.0"/></g>
+</g>
+<text x="467" y="896.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Private endpoint (azuremonitor)</text>
+<text x="467" y="911.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">rse-log-analytics-private-endpoint</text>
+<rect x="1810" y="160" width="416" height="190" rx="8" ry="8" fill="#FFFFFF" stroke="#008272" stroke-width="1.6"/>
+<text x="1822" y="180" font-size="12.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Storage account</text>
+<g transform="translate(1822,194)">
+<rect x="0" y="0" width="44" height="44" rx="8" ry="8" fill="#008272" stroke="#008272" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="22.0" cy="11.440000000000001" rx="13.2" ry="4.4"/><line x1="8.8" y1="11.440000000000001" x2="8.8" y2="30.799999999999997"/><line x1="35.2" y1="11.440000000000001" x2="35.2" y2="30.799999999999997"/><path d="M 8.8 30.799999999999997 A 13.2 4.4 0 0 0 35.2 30.799999999999997"/><path d="M 8.8 21.119999999999997 A 13.2 4.4 0 0 0 35.2 21.119999999999997"/></g>
+</g>
+<text x="1872" y="211.6" font-size="13" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-storage-account</text>
+<text x="1872" y="226.6" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">StorageV2 · HNS (ADLS Gen2) · TLS 1.2+</text>
+<g transform="translate(1822,260)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#008272" stroke="#008272" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 7.199999999999999 12.0 L 20.0 6.4 L 32.8 12.0 L 20.0 17.6 Z"/><line x1="7.199999999999999" y1="12.0" x2="7.199999999999999" y2="24.8"/><line x1="32.8" y1="12.0" x2="32.8" y2="24.8"/><line x1="20.0" y1="17.6" x2="20.0" y2="30.4"/><path d="M 7.199999999999999 24.8 L 20.0 30.4 L 32.8 24.8"/></g>
+</g>
+<text x="1868" y="276.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-demo-container</text>
+<text x="1868" y="291.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">blob container</text>
+<text x="1822" y="308" font-size="9.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Network ACLs: default deny; allow</text>
+<text x="1822" y="321" font-size="9.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">193.60.220.253 + VNet rules (vm/storage subnets)</text>
+<rect x="1810" y="374" width="416" height="280" rx="8" ry="8" fill="#FFFFFF" stroke="#C4148A" stroke-width="1.6"/>
+<text x="1822" y="394" font-size="12.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Monitoring</text>
+<g transform="translate(1822,408)">
+<rect x="0" y="0" width="44" height="44" rx="8" ry="8" fill="#C4148A" stroke="#C4148A" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="8.8" y="24.64" width="6.16" height="12.32"/><rect x="18.48" y="17.6" width="6.16" height="19.36"/><rect x="28.16" y="9.68" width="6.16" height="27.28"/></g>
+</g>
+<text x="1872" y="425.6" font-size="13" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-log-analytics</text>
+<text x="1872" y="440.6" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Log Analytics workspace · 30d retention</text>
+<g transform="translate(1822,472)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#C4148A" stroke="#C4148A" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 7.199999999999999 8.0 L 32.8 8.0 L 22.400000000000002 20.0 L 22.400000000000002 32.8 L 17.6 30.4 L 17.6 20.0 Z"/></g>
+</g>
+<text x="1868" y="488.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-dce-vms</text>
+<text x="1868" y="503.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Data Collection Endpoint · private only</text>
+<g transform="translate(1822,520)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#C4148A" stroke="#C4148A" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 7.199999999999999 8.0 L 32.8 8.0 L 22.400000000000002 20.0 L 22.400000000000002 32.8 L 17.6 30.4 L 17.6 20.0 Z"/></g>
+</g>
+<text x="1868" y="536.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-dcr-vms</text>
+<text x="1868" y="551.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Data Collection Rule · perf + syslog</text>
+<g transform="translate(1822,568)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#C4148A" stroke="#C4148A" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 20.0 4.8 L 31.200000000000003 8.8 L 31.200000000000003 19.2 C 31.200000000000003 27.200000000000003 26.0 31.200000000000003 20.0 33.6 C 14.0 31.200000000000003 8.8 27.200000000000003 8.8 19.2 L 8.8 8.8 Z"/><rect x="16.4" y="18.400000000000002" width="7.199999999999999" height="5.6000000000000005" rx="2"/><path d="M 17.6 18.400000000000002 L 17.6 16.0 A 2.4 2.4 0 0 1 22.400000000000002 16.0 L 22.400000000000002 18.400000000000002"/></g>
+</g>
+<text x="1868" y="584.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-workspace-ampls</text>
+<text x="1868" y="599.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Private Link Scope, private-only</text>
+<rect x="1810" y="678" width="416" height="110" rx="8" ry="8" fill="#FFFFFF" stroke="#773ADC" stroke-width="1.6"/>
+<text x="1822" y="698" font-size="12.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Private DNS zones</text>
+<g transform="translate(1822,712)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="20.0" cy="20.0" r="12.8"/><ellipse cx="20.0" cy="20.0" rx="5.6000000000000005" ry="12.8"/><line x1="7.199999999999999" y1="20.0" x2="32.8" y2="20.0"/></g>
+</g>
+<text x="1868" y="728.0" font-size="11.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">5 zones linked to rse-vnet</text>
+<text x="1868" y="743.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">blob, monitor, oms, ods, agentsvc</text>
+<rect x="1810" y="812" width="416" height="170" rx="8" ry="8" fill="#FFFFFF" stroke="#CA5010" stroke-width="1.6"/>
+<text x="1822" y="832" font-size="12.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Alerting</text>
+<g transform="translate(1822,846)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#CA5010" stroke="#CA5010" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 20.0 6.4 C 12.8 6.4 10.4 12.8 10.4 19.2 L 10.4 25.6 L 8.8 28.0 L 31.200000000000003 28.0 L 29.6 25.6 L 29.6 19.2 C 29.6 12.8 27.200000000000003 6.4 20.0 6.4 Z"/><path d="M 16.8 30.4 A 4.0 4.0 0 0 0 23.2 30.4"/></g>
+</g>
+<text x="1868" y="862.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-cpu-metric-alert</text>
+<text x="1868" y="877.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">CPU &gt; 90% (5 min window)</text>
+<g transform="translate(1822,890)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#CA5010" stroke="#CA5010" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 20.0 6.4 C 12.8 6.4 10.4 12.8 10.4 19.2 L 10.4 25.6 L 8.8 28.0 L 31.200000000000003 28.0 L 29.6 25.6 L 29.6 19.2 C 29.6 12.8 27.200000000000003 6.4 20.0 6.4 Z"/><path d="M 16.8 30.4 A 4.0 4.0 0 0 0 23.2 30.4"/></g>
+</g>
+<text x="1868" y="906.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-memory-metric-alert</text>
+<text x="1868" y="921.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Memory &gt; 75% (5 min window)</text>
+<g transform="translate(1822,934)">
+<rect x="0" y="0" width="40" height="40" rx="8" ry="8" fill="#CA5010" stroke="#CA5010" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="5.6000000000000005" y="11.200000000000001" width="28.799999999999997" height="18.400000000000002" rx="3"/><path d="M 5.6000000000000005 12.0 L 20.0 23.2 L 34.4 12.0"/></g>
+</g>
+<text x="1868" y="950.0" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">rse-alert-action-group</text>
+<text x="1868" y="965.0" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">email action</text>
+<g transform="translate(2290,160)">
+<rect x="0" y="0" width="52" height="52" rx="8" ry="8" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 13.52 34.32 A 8.32 8.32 0 1 1 15.6 18.72 A 10.4 10.4 0 0 1 35.36 14.560000000000002 A 9.36 9.36 0 1 1 37.44 34.32 Z"/></g>
+</g>
+<text x="2352" y="182" font-size="12.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Allow-listed FQDNs</text>
+<text x="2290" y="234" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Ubuntu archive &amp; keyserver, Snap Store,</text>
+<text x="2290" y="249" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">RStudio, VS Code &amp; Chrome apt repos,</text>
+<text x="2290" y="264" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">*.blob.core.windows.net, Entra ID / ARM.</text>
+<text x="2290" y="279" font-size="10.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">All other outbound traffic is denied.</text>
+<g transform="translate(2294,882)">
+<rect x="0" y="0" width="44" height="44" rx="8" ry="8" fill="#CA5010" stroke="#CA5010" stroke-width="0"/>
+<g stroke="#FFFFFF" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="6.16" y="12.32" width="31.68" height="20.240000000000002" rx="3"/><path d="M 6.16 13.2 L 22.0 25.52 L 37.839999999999996 13.2"/></g>
+</g>
+<text x="2350" y="904" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">cgavidia-calderon@</text>
+<text x="2350" y="920" font-size="12" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">turing.ac.uk</text>
+<text x="2290" y="940" font-size="10" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">(alert e-mail recipient)</text>
+<path d="M 80.0 268.0 L 366.5 268.0 L 366.5 456.0 L 421.0 456.0" fill="none" stroke="#323130" stroke-width="2.2" marker-end="url(#arrow-c0)"/>
+<circle cx="366.5" cy="268" r="12" fill="#323130"/>
+<text x="366.5" y="272.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">1</text>
+<path d="M 443.0 434.0 L 443.0 302.0" fill="none" stroke="#323130" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-c0)"/>
+<path d="M 80.0 418.0 L 396.5 418.0 L 396.5 602.0 L 421.0 602.0" fill="none" stroke="#773ADC" stroke-width="2.2" marker-end="url(#arrow-c1)"/>
+<circle cx="396.5" cy="418" r="12" fill="#773ADC"/>
+<text x="396.5" y="422.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">2</text>
+<path d="M 443.0 580.0 L 443.0 302.0" fill="none" stroke="#773ADC" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-c1)"/>
+<path d="M 455.0 302.0 L 455.0 518.0 L 381.5 518.0 L 381.5 590.0 L 421.0 590.0" fill="none" stroke="#773ADC" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-c1)"/>
+<path d="M 443.0 580.0 L 443.0 522.0 L 1720.5 522.0 L 1720.5 130.0 L 2316.0 130.0 L 2316.0 160.0" fill="none" stroke="#773ADC" stroke-width="2.2" marker-end="url(#arrow-c1)"/>
+<circle cx="1720.5" cy="522.0" r="12" fill="#773ADC"/>
+<text x="1720.5" y="526.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">3</text>
+<path d="M 433.0 302.0 L 433.0 696.0 L 371.5 696.0 L 371.5 772.0 L 421.0 772.0" fill="none" stroke="#008272" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-c2)"/>
+<path d="M 441.0 752.0 L 441.0 699.0 L 1720.5 699.0 L 1720.5 216.0 L 1810.0 216.0" fill="none" stroke="#008272" stroke-width="2.2" stroke-dasharray="6,4" marker-end="url(#arrow-c2)"/>
+<circle cx="1720.5" cy="699" r="12" fill="#008272"/>
+<text x="1720.5" y="703.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">4</text>
+<text x="1405" y="306" font-size="9.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">RBAC role assignment</text>
+<path d="M 1379.0 324.0 L 1379.0 336.0 L 1735.5 336.0 L 1735.5 260.0 L 1810.0 260.0" fill="none" stroke="#004E8C" stroke-width="2" stroke-dasharray="3,4" marker-end="url(#arrow-c3)"/>
+<path d="M 455.0 302.0 L 455.0 824.0 L 398.5 824.0 L 398.5 900.0 L 421.0 900.0" fill="none" stroke="#C4148A" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-c4)"/>
+<path d="M 441.0 880.0 L 441.0 827.0 L 1720.5 827.0 L 1720.5 430.0 L 1810.0 430.0" fill="none" stroke="#C4148A" stroke-width="2.2" stroke-dasharray="6,4" marker-end="url(#arrow-c4)"/>
+<circle cx="1720.5" cy="827" r="12" fill="#C4148A"/>
+<text x="1720.5" y="831.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">5</text>
+<path d="M 1818.0 430.0 L 1795.0 430.0 L 1795.0 866.0 L 1810.0 866.0" fill="none" stroke="#CA5010" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrow-c5)"/>
+<circle cx="1795" cy="648.0" r="12" fill="#CA5010"/>
+<text x="1795" y="652.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">6</text>
+<path d="M 1862.0 954.0 L 2310.0 954.0 L 2310.0 880.0" fill="none" stroke="#CA5010" stroke-width="2.2" marker-end="url(#arrow-c5)"/>
+<text x="300" y="1076" font-size="14" font-weight="700" font-style="normal" text-anchor="start" fill="#1B1B1B">Traffic &amp; data flows</text>
+<circle cx="312" cy="1102" r="12" fill="#323130"/>
+<text x="312" y="1106.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">1</text>
+<text x="334" y="1107" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Administrator -&gt; Bastion public IP (HTTPS 443) -&gt; private RDP/SSH tunnel into the VM (no public IP on the VM).</text>
+<circle cx="312" cy="1129" r="12" fill="#773ADC"/>
+<text x="312" y="1133.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">2</text>
+<text x="334" y="1134" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Fixed IP 193.60.220.253 -&gt; Firewall public IP -&gt; DNAT rule forwards SSH:22 to the VM&#x27;s private IP (narrower demo path).</text>
+<circle cx="312" cy="1156" r="12" fill="#773ADC"/>
+<text x="312" y="1160.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">3</text>
+<text x="334" y="1161" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">VM outbound -&gt; UDR (0.0.0.0/0) forces traffic via the Firewall -&gt; allowed only to the FQDN allow-list; everything else is denied.</text>
+<circle cx="312" cy="1183" r="12" fill="#008272"/>
+<text x="312" y="1187.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">4</text>
+<text x="334" y="1188" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">VM&#x27;s managed identity (Storage Blob Data Reader) mounts the container with BlobFuse2, over the storage account&#x27;s private endpoint.</text>
+<circle cx="312" cy="1210" r="12" fill="#C4148A"/>
+<text x="312" y="1214.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">5</text>
+<text x="334" y="1215" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Azure Monitor Agent on the VM -&gt; Data Collection Endpoint (private) -&gt; Data Collection Rule -&gt; Log Analytics workspace, via the AMPLS private endpoint.</text>
+<circle cx="312" cy="1237" r="12" fill="#CA5010"/>
+<text x="312" y="1241.5" font-size="13" font-weight="700" font-style="normal" text-anchor="middle" fill="#FFFFFF">6</text>
+<text x="334" y="1242" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Log Analytics metrics feed two Metric Alerts (CPU &gt; 90%, memory &gt; 75%) -&gt; Action Group -&gt; email notification.</text>
+<text x="1300" y="1076" font-size="14" font-weight="700" font-style="normal" text-anchor="start" fill="#1B1B1B">Resource categories</text>
+<rect x="1300" y="1092" width="20" height="20" rx="4" ry="4" fill="#0078D4" stroke="#0078D4" stroke-width="0"/>
+<text x="1328" y="1107" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Compute</text>
+<rect x="1300" y="1122" width="20" height="20" rx="4" ry="4" fill="#773ADC" stroke="#773ADC" stroke-width="0"/>
+<text x="1328" y="1137" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Networking</text>
+<rect x="1300" y="1152" width="20" height="20" rx="4" ry="4" fill="#008272" stroke="#008272" stroke-width="0"/>
+<text x="1328" y="1167" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Storage</text>
+<rect x="1300" y="1182" width="20" height="20" rx="4" ry="4" fill="#004E8C" stroke="#004E8C" stroke-width="0"/>
+<text x="1328" y="1197" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Identity / RBAC</text>
+<rect x="1300" y="1212" width="20" height="20" rx="4" ry="4" fill="#C4148A" stroke="#C4148A" stroke-width="0"/>
+<text x="1328" y="1227" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Monitoring</text>
+<rect x="1300" y="1242" width="20" height="20" rx="4" ry="4" fill="#CA5010" stroke="#CA5010" stroke-width="0"/>
+<text x="1328" y="1257" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Alerting / management</text>
+<text x="1300" y="1292" font-size="14" font-weight="700" font-style="normal" text-anchor="start" fill="#1B1B1B">Boundary styles</text>
+<rect x="1300" y="1302" width="34" height="18" rx="4" ry="4" fill="none" stroke="#8A8886" stroke-width="1.6" stroke-dasharray="6,4"/>
+<text x="1346" y="1317" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Resource group</text>
+<rect x="1300" y="1328" width="34" height="18" rx="4" ry="4" fill="#EFF6FC" stroke="#0078D4" stroke-width="1.6"/>
+<text x="1346" y="1343" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Virtual network</text>
+<rect x="1300" y="1354" width="34" height="18" rx="4" ry="4" fill="#FFFFFF" stroke="#A6A6A6" stroke-width="1.2" stroke-dasharray="3,3"/>
+<text x="1346" y="1369" font-size="12" font-weight="normal" font-style="normal" text-anchor="start" fill="#1B1B1B">Subnet</text>
+<text x="314" y="124" font-size="14.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Resource Group · rse-cloud-cybersecurity-rg</text>
+<text x="314" y="141" font-size="11.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Region: West Europe</text>
+<text x="344" y="184" font-size="14.5" font-weight="600" font-style="normal" text-anchor="start" fill="#1B1B1B">Virtual Network · rse-vnet</text>
+<text x="344" y="201" font-size="11.5" font-weight="normal" font-style="normal" text-anchor="start" fill="#5B5B5B">Address space: 10.0.0.0/16</text>
+</svg>

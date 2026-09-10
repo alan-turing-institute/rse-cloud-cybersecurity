@@ -1,16 +1,32 @@
 """Networking resources for the virtual machine.
 
-The VM is meant to be reachable directly over the public internet (see
-specs/01-the-scenario.md - security hardening is a later iteration). The one
-exception is a minimal NSG allowing inbound SSH and RDP from anywhere, added
-purely so the VM (and its graphical desktop) is reachable for the demo - it
-is not a security boundary, and every other port stays open via the default
-allow-all rules.
+The VM's network interface has no public IP of its own - it was removed when
+Azure Bastion was added (see specs/consolidating-bastion.md). The VM is
+reached via the Bastion host (infra/bastion.py) for the general case, or via
+the Application Firewall's NAT rule (infra/firewall.py) for a narrower demo
+path - see README-Bastion.md and README-Firewall.md. The NSG below (allowing
+inbound SSH/RDP from the Internet) is defence in depth rather than the
+actual way in, now that nothing here carries a direct public IP; outbound
+traffic from vm_subnet is routed through the Application Firewall via
+`route_table` (populated by infra/firewall.py, not this module - see the
+`ignore_changes` note below).
 """
 
+from pulumi import ResourceOptions
 from pulumi_azure_native import network
 
 from infra.resource_group import resource_group
+
+# Define route table
+route_table = network.RouteTable(
+    "rse-route-table",
+    resource_group_name=resource_group.name,
+    route_table_name="rse-route-table",
+    routes=[],
+    opts=ResourceOptions(
+        ignore_changes=["routes"]
+    ),  # allow routes to be created outside this definition
+)
 
 virtual_network = network.VirtualNetwork(
     "rse-vnet",
@@ -55,13 +71,12 @@ vm_subnet = network.Subnet(
     network_security_group=network.NetworkSecurityGroupArgs(
         id=network_security_group.id
     ),
-)
-
-public_ip = network.PublicIPAddress(
-    "rse-vm-public-ip",
-    resource_group_name=resource_group.name,
-    sku=network.PublicIPAddressSkuArgs(name=network.PublicIPAddressSkuName.STANDARD),
-    public_ip_allocation_method=network.IPAllocationMethod.STATIC,
+    route_table=network.RouteTableArgs(id=route_table.id),
+    service_endpoints=[
+        network.ServiceEndpointPropertiesFormatArgs(
+            service="Microsoft.Storage",
+        )
+    ],
 )
 
 network_interface = network.NetworkInterface(
@@ -71,7 +86,6 @@ network_interface = network.NetworkInterface(
         network.NetworkInterfaceIPConfigurationArgs(
             name="rse-vm-ip-config",
             subnet=network.SubnetArgs(id=vm_subnet.id),
-            public_ip_address=network.PublicIPAddressArgs(id=public_ip.id),
         )
     ],
 )
