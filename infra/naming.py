@@ -6,7 +6,7 @@ namespace).
 import pulumi_random
 
 suffix = pulumi_random.RandomString(
-    "rse-global-suffix",
+    "subdir-global-suffix",
     length=8,
     lower=True,
     upper=False,

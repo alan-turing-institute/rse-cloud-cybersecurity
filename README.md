@@ -30,6 +30,7 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
 3. Provision (or reuse) a storage account and blob container to hold the Pulumi state, if one doesn't already exist:
 
    ```bash
+   az group create --name <resource-group> --location uksouth
    az storage account create --name <storage-account> --resource-group <resource-group>
    az storage container create --name <container> --account-name <storage-account> --auth-mode login
    ```
@@ -37,6 +38,11 @@ This repository contains a [Pulumi](https://www.pulumi.com/) program, written in
    See [Create an Azure storage account](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create) and [Manage blob containers using Azure CLI](https://learn.microsoft.com/en-us/azure/storage/blobs/blob-containers-cli) for the full set of options (redundancy, access tier, networking, etc.).
 
    Since this project authenticates solely via the Azure CLI, grant your account the **Storage Blob Data Contributor** role on the storage account (or its resource group) so Pulumi can read/write state — see [Assign an Azure role for access to blob data](https://learn.microsoft.com/en-us/azure/storage/blobs/assign-azure-role-data-access).
+
+   ```bash
+   az role assignment create --role "Storage Blob Data Contributor" --assignee <email> \
+     --scope /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>
+   ```
 
 4. Log Pulumi in to the Azure Blob Storage state backend, using the container name from step 3 and the storage account it lives in:
 
