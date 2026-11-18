@@ -18,6 +18,7 @@ from infra.networking import (
     virtual_network,
     vm_subnet,
     db_subnet,
+    ca_subnet,
     get_ip_addresses_from_private_endpoint,
 )
 from infra.resource_group import resource_group
@@ -41,5 +42,6 @@ __all__ = [
     "vm_admin_password",
     "vm_subnet",
     "db_subnet",
+    "ca_subnet",
     "get_ip_addresses_from_private_endpoint",
 ]

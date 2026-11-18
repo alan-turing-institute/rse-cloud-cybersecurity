@@ -16,6 +16,7 @@ from infra import (
     db_private_endpoint,
     admin_username,
     get_ip_addresses_from_private_endpoint,
+    ca_subnet,
 )
 
 workspace = operationalinsights.Workspace(
@@ -42,8 +43,11 @@ managed_env = app.ManagedEnvironment(
             shared_key=workspace_shared_keys.apply(lambda r: r.primary_shared_key),
         ),
     ),
+    vnet_configuration=app.VnetConfigurationArgs(
+        infrastructure_subnet_id=ca_subnet.id,
+        internal=True
+    ),
 )
-
 
 db_hedgedoc_documents_name = "hedgedoc"
 db_hedgedoc_documents = dbforpostgresql.Database(
@@ -70,7 +74,7 @@ container_app = app.ContainerApp(
         ],
         secrets=[
             app.SecretArgs(name="registry-token", value=getenv("DOCKER_PAT")),
-            app.SecretArgs(name="db-admin-password", value=db_admin_password),
+            app.SecretArgs(name="db-admin-password", value=db_admin_password.result),
         ],
     ),
     template=app.TemplateArgs(

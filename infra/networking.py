@@ -89,6 +89,23 @@ db_subnet = network.Subnet(
     ),
 )
 
+ca_subnet = network.Subnet(
+    "app-ca-subnet",
+    resource_group_name=resource_group.name,
+    virtual_network_name=virtual_network.name,
+    address_prefix="10.0.3.0/27",
+    network_security_group=network.NetworkSecurityGroupArgs(
+        id=network_security_group.id
+    ),
+    delegations=[
+        network.DelegationArgs(
+            name="SubnetDelegationContainerApps",
+            service_name="Microsoft.App/environments",
+            type="Microsoft.Network/virtualNetworks/subnets/delegations",
+        ),
+    ],
+)
+
 public_ip = network.PublicIPAddress(
     "app-vm-public-ip",
     resource_group_name=resource_group.name,

@@ -54,6 +54,18 @@ db_server = dbforpostgresql.Server(
     version=dbforpostgresql.PostgresMajorVersion.POSTGRES_MAJOR_VERSION_14,
 )
 
+dbforpostgresql.Configuration(
+    f"app-db-config-tls",
+    configuration_name="require_secure_transport",
+    resource_group_name=resource_group.name,
+    server_name=db_server.name,
+    source="user-override",
+    value="OFF",
+    # Pulumi workaround for being unable to delete Configuration
+    # resource
+    # https://github.com/pulumi/pulumi-azure-native/issues/3072
+    opts=ResourceOptions(parent=db_server, retain_on_delete=True),
+)
 
 # Deploy a private endpoint for the PostgreSQL server
 db_private_endpoint = network.PrivateEndpoint(
