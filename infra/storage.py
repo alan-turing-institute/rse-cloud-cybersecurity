@@ -7,15 +7,15 @@ from infra.naming import suffix
 from infra.resource_group import resource_group
 
 storage_account = storage.StorageAccount(
-    "rse-storage-account",
+    "app-storage-account",
     resource_group_name=resource_group.name,
-    account_name=pulumi.Output.concat("rsecybersec", suffix.result),
+    account_name=pulumi.Output.concat("appcontainer", suffix.result),
     kind=storage.Kind.STORAGE_V2,
     sku=storage.SkuArgs(name=storage.SkuName.STANDARD_LRS),
 )
 
 blob_container = storage.BlobContainer(
-    "rse-demo-container",
+    "app-demo-container",
     resource_group_name=resource_group.name,
     account_name=storage_account.name,
 )

@@ -17,7 +17,7 @@ class TestNetworking(unittest.TestCase):
     @pulumi.runtime.test
     def test_virtual_network_urn(self):
         def check_urn(urn: str) -> None:
-            self.assertIn("rse-vnet", urn)
+            self.assertIn("app-vnet", urn)
 
         return virtual_network.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]
 
@@ -40,7 +40,7 @@ class TestNetworking(unittest.TestCase):
     @pulumi.runtime.test
     def test_vm_subnet_urn(self):
         def check_urn(urn: str) -> None:
-            self.assertIn("rse-vm-subnet", urn)
+            self.assertIn("app-vm-subnet", urn)
 
         return vm_subnet.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]
 
@@ -68,6 +68,6 @@ class TestNetworking(unittest.TestCase):
     @pulumi.runtime.test
     def test_network_interface_urn(self):
         def check_urn(urn: str) -> None:
-            self.assertIn("rse-vm-nic", urn)
+            self.assertIn("app-vm-nic", urn)
 
         return network_interface.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]

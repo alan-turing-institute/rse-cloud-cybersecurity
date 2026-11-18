@@ -1,7 +1,7 @@
 [project]
-name = "rse-cloud-cybersecurity"
+name = "app-containerapp-test"
 version = "0.1.0"
-description = "Pulumi program that deploys Azure infrastructure for the 'Cloud Cybersecurity for Research Engineers' RSECON26 presentation."
+description = "Pulumi program that deploys Azure infrastructure to test out creating Container Apps."
 requires-python = ">=3.11"
 dependencies = [
     "jinja2>=3.1.6",

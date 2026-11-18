@@ -25,4 +25,4 @@ class AzureMocks(pulumi.runtime.Mocks):
         return {}
 
 
-pulumi.runtime.set_mocks(AzureMocks(), project="rse-cloud-cybersecurity", stack="test")
+pulumi.runtime.set_mocks(AzureMocks(), project="app-containerapp-test", stack="test")

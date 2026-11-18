@@ -5,44 +5,73 @@ stage (see specs/01-the-scenario.md).
 
 import pulumi
 import pulumi_random
-from pulumi_azure_native import sql
+from pulumi import ResourceOptions
+from pulumi_azure_native import dbforpostgresql, network
 
 from infra.naming import suffix
 from infra.resource_group import resource_group
+from infra.networking import db_subnet
 
 config = pulumi.Config()
 admin_username = config.get("db-admin-username") or "sqladmin"
 
 db_admin_password = pulumi_random.RandomPassword(
-    "rse-db-admin-password",
+    "app-db-admin-password",
     length=24,
     special=True,
     override_special="_%@",
 )
 
-sql_server = sql.Server(
-    "rse-sql-server",
-    resource_group_name=resource_group.name,
-    server_name=pulumi.Output.concat("rse-cybersecurity-sql-", suffix.result),
+# Define a PostgreSQL server
+db_server = dbforpostgresql.Server(
+    "app-db-server",
     administrator_login=admin_username,
     administrator_login_password=db_admin_password.result,
-    version="12.0",
+    auth_config=dbforpostgresql.AuthConfigArgs(
+        active_directory_auth=dbforpostgresql.MicrosoftEntraAuth.DISABLED,
+        password_auth=dbforpostgresql.PasswordBasedAuth.ENABLED,
+    ),
+    backup=dbforpostgresql.BackupArgs(
+        backup_retention_days=7,
+        geo_redundant_backup=dbforpostgresql.GeographicallyRedundantBackup.DISABLED,
+    ),
+    create_mode=dbforpostgresql.CreateMode.DEFAULT,
+    data_encryption=dbforpostgresql.DataEncryptionArgs(
+        type="SystemManaged",
+    ),
+    high_availability=dbforpostgresql.HighAvailabilityArgs(
+        mode=dbforpostgresql.PostgreSqlFlexibleServerHighAvailabilityMode.DISABLED,
+    ),
+    resource_group_name=resource_group.name,
+    server_name=pulumi.Output.concat("app-containerapp-test-db-", suffix.result),
+    sku=dbforpostgresql.SkuArgs(
+        name="Standard_B2s",
+        tier=dbforpostgresql.SkuTier.BURSTABLE,
+    ),
+    storage=dbforpostgresql.StorageArgs(
+        storage_size_gb=32,
+    ),
+    version=dbforpostgresql.PostgresMajorVersion.POSTGRES_MAJOR_VERSION_14,
 )
 
-# No VNet integration at this stage, so the server is public - open the
-# firewall to the full public range rather than leaving it unreachable.
-sql_firewall_rule = sql.FirewallRule(
-    "rse-sql-allow-all",
-    resource_group_name=resource_group.name,
-    server_name=sql_server.name,
-    start_ip_address="0.0.0.0",
-    end_ip_address="255.255.255.255",
-)
 
-sql_database = sql.Database(
-    "rse_demo_db",
+# Deploy a private endpoint for the PostgreSQL server
+db_private_endpoint = network.PrivateEndpoint(
+    f"app_db_server_private_endpoint",
+    private_endpoint_name="db-server-endpoint",
+    private_link_service_connections=[
+        network.PrivateLinkServiceConnectionArgs(
+            group_ids=["postgresqlServer"],
+            name="db-server-privatelink",
+            private_link_service_connection_state=network.PrivateLinkServiceConnectionStateArgs(
+                actions_required="None",
+                description="Auto-approved",
+                status="Approved",
+            ),
+            private_link_service_id=db_server.id,
+        )
+    ],
     resource_group_name=resource_group.name,
-    server_name=sql_server.name,
-    database_name="rse_demo_db",
-    sku=sql.SkuArgs(name="Basic", tier="Basic"),
+    subnet=network.SubnetArgs(id=db_subnet.id),
+    opts=ResourceOptions(parent=db_server),
 )

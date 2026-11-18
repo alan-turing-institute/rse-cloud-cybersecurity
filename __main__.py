@@ -7,10 +7,11 @@ from infra import (
     db_admin_password,
     public_ip,
     resource_group,
-    sql_server,
+    db_server,
     storage_account,
     virtual_machine,
     vm_admin_password,
+    container_app,
 )
 
 storage_account_keys = storage.list_storage_account_keys_output(
@@ -24,8 +25,9 @@ pulumi.export(
     "storage_account_primary_key",
     pulumi.Output.secret(storage_account_keys.keys[0].value),
 )
-pulumi.export("sql_server_fqdn", sql_server.fully_qualified_domain_name)
+pulumi.export("db_server_fqdn", db_server.fully_qualified_domain_name)
 pulumi.export("db_admin_password", pulumi.Output.secret(db_admin_password.result))
 pulumi.export("vm_name", virtual_machine.name)
 pulumi.export("vm_public_ip", public_ip.ip_address)
 pulumi.export("vm_admin_password", pulumi.Output.secret(vm_admin_password.result))
+pulumi.export("hedgedoc", container_app.configuration.apply(lambda c: c.ingress).apply(lambda i: i.fqdn))

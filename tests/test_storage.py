@@ -11,7 +11,7 @@ class TestStorage(unittest.TestCase):
     @pulumi.runtime.test
     def test_storage_account_urn(self):
         def check_urn(urn: str) -> None:
-            self.assertIn("rse-storage-account", urn)
+            self.assertIn("app-storage-account", urn)
 
         return storage_account.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]
 
@@ -29,6 +29,6 @@ class TestStorage(unittest.TestCase):
     @pulumi.runtime.test
     def test_blob_container_urn(self):
         def check_urn(urn: str) -> None:
-            self.assertIn("rse-demo-container", urn)
+            self.assertIn("app-demo-container", urn)
 
         return blob_container.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]

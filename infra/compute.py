@@ -26,11 +26,9 @@ import pulumi_random
 from pulumi_azure_native import compute
 
 from infra.database import admin_username as db_admin_username
-from infra.database import sql_database, sql_server
 from infra.networking import network_interface
 from infra.resource_group import resource_group
 
-_MSSQL_PROFILE_NAME = "rse-demo-db"
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _CLOUD_INIT_TEMPLATE_PATH = _TEMPLATES_DIR / "vm-cloud-init.yaml.j2"
 
@@ -38,7 +36,7 @@ config = pulumi.Config()
 admin_username = config.get("vm-admin-username") or "azureuser"
 
 vm_admin_password = pulumi_random.RandomPassword(
-    "rse-vm-admin-password",
+    "app-vm-admin-password",
     length=24,
     special=True,
     override_special="_%@",
@@ -47,41 +45,9 @@ vm_admin_password = pulumi_random.RandomPassword(
 _cloud_init_template = jinja2.Template(_CLOUD_INIT_TEMPLATE_PATH.read_text())
 
 
-def _vscode_settings_json(sql_server_fqdn: str, database_name: str) -> str:
-    return json.dumps(
-        {
-            "mssql.connections": [
-                {
-                    "profileName": _MSSQL_PROFILE_NAME,
-                    "server": sql_server_fqdn,
-                    "database": database_name,
-                    "authenticationType": "SqlLogin",
-                    "user": db_admin_username,
-                    "password": "",
-                    "savePassword": True,
-                    "encrypt": "Mandatory",
-                }
-            ]
-        }
-    )
-
-
-def _custom_data(sql_server_fqdn: str, database_name: str) -> str:
-    vscode_settings_json = _vscode_settings_json(sql_server_fqdn, database_name)
-    vscode_settings_b64 = base64.b64encode(vscode_settings_json.encode()).decode()
-    cloud_init = _cloud_init_template.render(
-        admin_username=admin_username,
-        vscode_settings_b64=vscode_settings_b64,
-    )
-    return base64.b64encode(cloud_init.encode()).decode()
-
-
-custom_data = pulumi.Output.all(  # ty: ignore[missing-argument]
-    sql_server.fully_qualified_domain_name, sql_database.name
-).apply(lambda args: _custom_data(*args))  # ty: ignore[invalid-argument-type]
 
 virtual_machine = compute.VirtualMachine(
-    "rse-vm",
+    "app-vm",
     resource_group_name=resource_group.name,
     hardware_profile=compute.HardwareProfileArgs(vm_size="Standard_B2s"),
     network_profile=compute.NetworkProfileArgs(
@@ -104,10 +70,9 @@ virtual_machine = compute.VirtualMachine(
         ),
     ),
     os_profile=compute.OSProfileArgs(
-        computer_name="rse-vm",
+        computer_name="app-vm",
         admin_username=admin_username,
         admin_password=vm_admin_password.result,
-        custom_data=custom_data,
         linux_configuration=compute.LinuxConfigurationArgs(
             disable_password_authentication=False,
         ),

@@ -2,4 +2,4 @@
 
 from pulumi_azure_native import resources
 
-resource_group = resources.ResourceGroup("rse-cloud-cybersecurity-rg")
+resource_group = resources.ResourceGroup("app-containerapp-test-rg")

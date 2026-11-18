@@ -11,7 +11,7 @@ class TestResourceGroup(unittest.TestCase):
     @pulumi.runtime.test
     def test_resource_group_urn_contains_expected_name(self):
         def check_urn(urn: str) -> None:
-            self.assertIn("rse-cloud-cybersecurity-rg", urn)
+            self.assertIn("app-containerapp-test-rg", urn)
 
         # ty cannot resolve pulumi's overloaded, generic-self `Output.apply`
         # signature used by this mocking pattern.

@@ -13,7 +13,7 @@ class TestCompute(unittest.TestCase):
     @pulumi.runtime.test
     def test_virtual_machine_urn(self):
         def check_urn(urn: str) -> None:
-            self.assertIn("rse-vm", urn)
+            self.assertIn("app-vm", urn)
 
         return virtual_machine.urn.apply(check_urn)  # ty: ignore[missing-argument, invalid-argument-type]
 
