@@ -25,7 +25,6 @@ import pulumi
 import pulumi_random
 from pulumi_azure_native import compute
 
-from infra.database import admin_username as db_admin_username
 from infra.networking import network_interface
 from infra.resource_group import resource_group
 
@@ -33,7 +32,7 @@ _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _CLOUD_INIT_TEMPLATE_PATH = _TEMPLATES_DIR / "vm-cloud-init.yaml.j2"
 
 config = pulumi.Config()
-admin_username = config.get("vm-admin-username") or "azureuser"
+vm_admin_username = config.get("vm-admin-username") or "azureuser"
 
 vm_admin_password = pulumi_random.RandomPassword(
     "app-vm-admin-password",
@@ -44,7 +43,9 @@ vm_admin_password = pulumi_random.RandomPassword(
 
 _cloud_init_template = jinja2.Template(_CLOUD_INIT_TEMPLATE_PATH.read_text())
 
-
+def custom_data() -> str:
+    cloud_init = _cloud_init_template.render(vm_admin_username=vm_admin_username)
+    return base64.b64encode(cloud_init.encode()).decode()
 
 virtual_machine = compute.VirtualMachine(
     "app-vm",
@@ -71,8 +72,9 @@ virtual_machine = compute.VirtualMachine(
     ),
     os_profile=compute.OSProfileArgs(
         computer_name="app-vm",
-        admin_username=admin_username,
+        admin_username=vm_admin_username,
         admin_password=vm_admin_password.result,
+        custom_data=custom_data(),
         linux_configuration=compute.LinuxConfigurationArgs(
             disable_password_authentication=False,
         ),

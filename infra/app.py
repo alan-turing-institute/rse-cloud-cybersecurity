@@ -7,6 +7,7 @@ from pulumi_azure_native import operationalinsights
 from pulumi_azure_native import resources
 from pulumi_azure_native import app
 from pulumi_azure_native import dbforpostgresql
+from pulumi_azure_native import network
 
 from infra.resource_group import resource_group
 from infra.database import db_server
@@ -14,7 +15,7 @@ from infra.database import db_server
 from infra import (
     db_admin_password,
     db_private_endpoint,
-    admin_username,
+    db_admin_username,
     get_ip_addresses_from_private_endpoint,
     ca_subnet,
 )
@@ -64,7 +65,7 @@ container_app = app.ContainerApp(
     resource_group_name=resource_group.name,
     managed_environment_id=managed_env.id,
     configuration=app.ConfigurationArgs(
-        ingress=app.IngressArgs(external=True, target_port=80),
+        ingress=app.IngressArgs(external=True, target_port=3000),
         registries=[
             app.RegistryCredentialsArgs(
                 server="index.docker.io",
@@ -112,7 +113,7 @@ container_app = app.ContainerApp(
                     ),
                     app.EnvironmentVarArgs(
                         name="CMD_DB_USERNAME",
-                        value=admin_username,
+                        value=db_admin_username,
                     ),
                     app.EnvironmentVarArgs(
                         name="CMD_EMAIL",
@@ -134,7 +135,22 @@ container_app = app.ContainerApp(
 #                    ),
 #                ],
             )
-        ]
+        ],
+        scale=app.ScaleArgs(
+            min_replicas=1,
+            max_replicas=2,
+            cooldown_period=300,
+            polling_interval=30,
+            rules=[
+                app.ScaleRuleArgs(
+                    name="http-scalar",
+                    http=app.HttpScaleRuleArgs(
+                        metadata={
+                            "concurrentRequests": "10",
+                        }
+                    ),
+                ),
+            ],
+        ),
     ),
 )
-

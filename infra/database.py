@@ -13,7 +13,7 @@ from infra.resource_group import resource_group
 from infra.networking import db_subnet
 
 config = pulumi.Config()
-admin_username = config.get("db-admin-username") or "sqladmin"
+db_admin_username = config.get("db-admin-username") or "sqladmin"
 
 db_admin_password = pulumi_random.RandomPassword(
     "app-db-admin-password",
@@ -25,7 +25,7 @@ db_admin_password = pulumi_random.RandomPassword(
 # Define a PostgreSQL server
 db_server = dbforpostgresql.Server(
     "app-db-server",
-    administrator_login=admin_username,
+    administrator_login=db_admin_username,
     administrator_login_password=db_admin_password.result,
     auth_config=dbforpostgresql.AuthConfigArgs(
         active_directory_auth=dbforpostgresql.MicrosoftEntraAuth.DISABLED,
